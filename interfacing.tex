@@ -81,6 +81,24 @@ However even though these tools have been available for several years, they have
 What is needed to scale up embedded scientific computing is a system that decouples the application layer from the computational back-end, similar to how e.g. \texttt{SQL} separates the application and database. A well defined separation of concerns allows for independent development of client and server components, by different people with different background and expertise. Idealy, the system interface should describe domain logic of scientific computing and abstract implementation details as much as possible. This gives clients a universal point of interaction to perform data operations without any specialized knowledge about the computational language or infrastructure. At the same time, statisticians can expose analysis methods for use in applications without having to learn web development or other tools. Careful isolation of components along the lines of domain logic allows developers to focus on their expertise using their tools of choice. This vision forms the starting point of this research. 
 
 
+\subsection{Scope}
+
+The purpose of this paper is to explore the domain logic of scientific computing and identify primary challenges and opportunities in transitioning to component based data analysis. We start with an extensive review of the purpose, problems and practices in this unique field. 
+
+
+The most 
+
+
+- component based software engineering: interface.
+- goal: explore this new space
+- identify challenges and opportunities
+- to do so: first explore domain logic
+- opencpu: example throughout
+
+The remainder of this paper is structured as follows. Section 2 gives a general introduction to practices and domain logic of scientific computing. Section 3 then continues with a discussion of some previous work and the state problem, which is the most central challenge in the design of an \API for embedded analysis. Section 4 then introduces the \OpenCPU software. We first explain the history and philosophy of the system and slowly work our way to a more detailed description of the \API. We end with  examples demonstrating some existing and potential applications.
+
+
+
 
 
 \subsection{The \OpenCPU system}
@@ -90,15 +108,6 @@ The \OpenCPU system is used as a reference implementation throughout this paper.
 For example, the conventional container format for namespacing a collection of data and functions in \R is a \emph{package}. Other products might use different mechanics and jargon for combining and publishing a set of objects. However any system needs some notion of namespaces and dependencies analogous to packages in \R. For sake of simplicity this paper discusses such concepts mostly from the way they take shape in \R. But we want to stress that even though our research and the \OpenCPU system are inspired by and tailored to the way things work in \R, the approach should generalize quite naturally to other computational back-ends. The purpose of the \OpenCPU system is not merely to provide software, but also not to propose an \API standard. \OpenCPU illustrates what an abstracted interface to scientific computing could looks like. The implementation allows us and others to put this new approach into practice and get first hand experience with the problems and opportunities in this unexplored field. 
 
 
-\subsection{Scope of this research}
-
-- component based software engineering: interface.
-- goal: explore this new space
-- identify challenges and opportunities
-- to do so: first explore domain logic
-- opencpu: example throughout
-
-The remainder of this paper is structured as follows. Section 2 gives a general introduction to practices and domain logic of scientific computing. The purpose, problems and practices of this unique field are described to set the stage for our system and interface. Section 3 then continues with a discussion of some previous work and the state problem, which is the most central challenge in the design of an \API for embedded analysis. Section 4 then introduces the \OpenCPU software. We first explain the history and philosophy of the system and slowly work our way to a more detailed description of the \API. We end with  examples demonstrating some existing and potential applications.
 
 
 \section{Practices and domain logic of scientific computing}
