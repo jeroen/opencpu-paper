@@ -1,0 +1,22 @@
+\section{The OpenCPU HTTP API}
+
+One of the major strengths of OpenCPU is that it builds on the Hypertext Transfer Protocol (\HTTP). \HTTP is the most used application protocol on the internet, and the foundation of data communication in browsers and the world wide web. The \HTTP specification is very mature, highly optimized and widely implemented. It provides all functionality required to build modern applications and has recently gained popularity for web \API's as well. The benefit if using a standardized application protocol such as \HTTP is that a lot of funtionality gets built-in by design. \HTTP has excellent mechanisms for authentication, encryption, caching, distribution, concurrency, error handling, etc. This allows us to defer appliation logic of our system to the \HTTP standards and limit the \OpenCPU \API definition to domain logic specific to scientific computing. The result is a simple and interoperable interface that is easy to learn and can be implemented with standard \HTTP software libraries. This is an enormous advantage over many other interfaces to \R and critical to make the system scalable and extensible. 
+
+The \OpenCPU \API defines a mapping between \HTTP requests and high-level operations in scientific computing such as calling functions, running scripts, rendering \Latex, access to data, manual pages and management of files and objects. The \API specifically does not prescribe any language implementation details. Low-level concerns such as process management or code evaluation are abstracted and at the discretion of the server implementation. The \API also does describe any logic which can be taken care of on the protocol or application layer. For example, to add support for authentication any of the standard mechanisms can be used such as \HTTP basic auth \citep{franks1999rfc} or OAuth 2.0 \citep{hardt2012oauth}. Implementing authentication methods might vary from a simple server configuration to defining additional endpoints. However authentication will not affect the meaning of the \API and can therefore considered independent of our work.
+
+What remains after removing implementation and application logic is a simple and unambiguous interface to scientific computing that separates client and server responsibility along the lines of domain logic. The \OpenCPU \API defines a minimal set of functionality that is required 
+
+
+
+.  that clients can work with, but leave language details and implementation choices as much as possible up to the server. Thereby responsibility of client and server are clearly seperated, which is essential for software development. New clients or applications updates can be implemented without affecting the server, and different servers can optimize within their strengths and limitations. An unambiguous API ensures that applications developed and tested on one server will work on any other server as well. 
+
+
+-simple
+-interoperable
+-accessible
+-extensible
+-reliable
+
+This is an enormous advantage over many other \R interfaces, which at best implement custom ad-hoc mechanisms for such functionality. In HTTP the solutions have been available for a long time and are already implemented in every client. This reduces risks of design flaws and makes our system more accessible and easier to adopt by 3rd party clients with limited knowledge of \R.
+
+The obvious constraint is that we need to work within the restrictions of the protocol. One specific challenge discussed in a subsequent section is management of state. Because HTTP is stateless, it is not an option to simply provide access to an \R process over a socket such as done in \texttt{RServe} or \texttt{Shiny}. Instead the OpenCPU API needs to spend some additional effort in describing management of \emph{resources}. However this restriction is not merely a limitation but actually an important requirement for concurrency. The result is an elegant system for interacting with \R methods that naturally supports asynchronous requests and parallel computing. 

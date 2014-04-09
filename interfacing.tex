@@ -39,7 +39,7 @@
 \newcommand{\RPC}{\texttt{RPC}\xspace}
 \newcommand{\ID}{\texttt{ID}\xspace}
 \newcommand{\OpenCPU}{\texttt{OpenCPU}\xspace}
-
+\newcommand{\Latex}{\LaTeX \xspace}
 %actual doc
 \begin{document}
 
@@ -49,41 +49,23 @@
 A vital part of facilitating embedded scientific computing is specification of the interface. Clients or systems integrating analytical components require a simple well interface that exposes desired functionality and hides implementation details. Currently, most statistical software is designed for UI rather than API interaction which presents some challenges when turning methods into components. Because scientific computing is highly interactive, the role of \emph{state} is the central problem in the design of an interface. This paper introduces OpenCPU: a system for embedded scientific computing based on R. The OpenCPU API is described in detail and used to exemplify interoperability of statistical methods by decoupling application from statistical computation. Because OpenCPU leverages native features of HTTP, it can easily be extended and no knowledge of R is required to implement clients. We finish by showing how the OpenCPU makes it trivial to turn R packages into webapps.
 \end{abstract}
 
-\begin{center}
-\noindent\rule{8cm}{0.4pt}
-\end{center}
-
-\vspace{8pt}
-
-\begin{quote}
-\emph{Premature optimization is the root of all evil.} --- Donald Knuth
-\end{quote}
-
 \section{Introduction}
 
-- what is embedded scientific computing
-- why is it increasingly important
-- scale
+Methods for scientific computing are traditionally implemented in specialized software assisting the statistician in all facets of the data analysis process. Some products are optimized for use via a command line interface (\CLI) whereas others focus on the graphical user interface (\GUI), yet most emphasize the user interface (\UI) as primary point of interaction. However the changing role of data analysis demands better interoperability of statistical software to integrate statistical methods into systems and applications. 
 
-
-%Methods for scientific computing are typically implemented in specialized packages assisting the statistician in all facets of the data analysis process. Some products are optimized for use via a command line interface (\CLI) whereas others focus on the graphical user interface (\GUI), yet most emphasize the user interface (\UI) as primary point of interaction. However the changing role of data analysis in modern society is demanding better interoperability of statistical software. Embedding statistical methods in the next generation of software systems requires better application programming interaces (\API). This means moving away from manual solutions towards component-based analysis units. This research is a piece in a series of contributions advocating for a more flexible and integrated approach to data analysis. Throughout this paper we refer to this under the umbralla term of \emph{embedded scientific computing}.
+%This means moving away from manual solutions towards component-based analysis units. This research is a piece in a series of contributions advocating for a more flexible and integrated approach to data analysis. Throughout this paper we refer to this under the umbralla term of \emph{embedded scientific computing}.
 
 %A vital part of facilitating embedded scientific computing is specification of the interface. Clients or systems integrating analytical components require a well defined \API that exposes desired functionality while abstracting language specifics and implementation details. Defining an interoperable entry point allows servers to expose computational methods, and clients to call these methods. Such a universal interface separates the domain logic of scientific computing from application logic and lower-level logistics. 
 
-%An interesting analogy is provided by database interfaces. For example, the \texttt{SQL} language provides an interoperable interface for managing data held in a relational database management system (\texttt{RDBMS}). \texttt{SQL} consists of a data definition language and a data manipulation language that separates client and server responsibilities. The standard interface allows for implementing clients and applications building on relational data without any database implementation knowledge. Many \texttt{SQL} servers such as \texttt{MySQL} and \texttt{MS SQL Server} implement this standard for various platforms and languages and providing different optimization and configuration options. Naturally, some \texttt{SQL} extensions and dialects exist. But the core of the language is widely implemented and has greatly contributed to the wide adoption of relational databases.
+This paper provides an introduction to the topic of embedded scientific computing. The presented ideas are largely derived from personal experiences of developing systems and applications with integrated analysis and vizualization. We identify primary challenges and opportunities in transitioning from a \UI to \API paradigm, and moving beyond ad-hoc cross language bindings towards foundations for scalable component based data analysis. Rather than focusing on technical problems, our approach puts heavy emphasis on exploring the domain logic of the field along the lines of \citep{evans2004domain}. Scalable components require meticulous separation of concerns, and a significant share of this work is devoted to describing the concerns of scientific computing. To this end, our journey starts with an extensive review of the purpose, problems and practices of data analysis, and the implications for embedded components. The goal is to study the conceptual model of scientific computing and carefully separate it from implementation or application. This provides the requirements for a system that facilitates embedded scientific computing, and sets the stage for an interface definition.
 
 \subsection{The need for abstraction}
 
-Previous work in embedded scientific computing has mostly been limited to low-level tools for connecting statistical software to general purpose environments. As a result, ``bridges'' are available to execute an \R script or process from inside most popular languages. For example, \texttt{JRI} \citep{rjava}, \texttt{RInside} \citep{eddelbuettel2011rcpp}, \texttt{rpy2} \citep{gautier2008rpy2} or \texttt{RinRuby} \citep{dahl2008rinruby} can be used to call \R from respectively \texttt{Java}, \texttt{C++}, \texttt{Python} or \texttt{Ruby}. \cite{heiberger2009r} provide a set of tools to execute \R code from \texttt{DCOM} clients on Windows, mostly to support running \R in Microsoft Excel. The Apache2 module \texttt{rApache} (\texttt{mod\_R}) makes it possible to run R scripts from the Apache2 web server \citep{horner2013rapache}. The \texttt{littler} program provides hash-bang capability for \R, as well as simple command-line and piping use on \texttt{unix} \citep{littler}. Finally, \texttt{Rserve} is \texttt{TCP/IP} server which provides low level access to an R session over a socket \citep{urbanek2013rserve}. 
+Previous work in embedded scientific computing has mostly been limited to low-level tools for connecting statistical software to general purpose environments. As a result, bindings and ``bridges'' are available to execute an \R script or process from inside most popular languages. For example, \texttt{JRI} \citep{rjava}, \texttt{RInside} \citep{eddelbuettel2011rcpp}, \texttt{rpy2} \citep{gautier2008rpy2} or \texttt{RinRuby} \citep{dahl2008rinruby} can be used to call \R from respectively \texttt{Java}, \texttt{C++}, \texttt{Python} or \texttt{Ruby}. \cite{heiberger2009r} provide a set of tools to execute \R code from \texttt{DCOM} clients on Windows, mostly to support running \R in Microsoft Excel. The Apache2 module \texttt{rApache} (\texttt{mod\_R}) makes it possible to run R scripts from the Apache2 web server \citep{horner2013rapache}. The \texttt{littler} program provides hash-bang capability for \R, as well as simple command-line and piping use on \texttt{unix} \citep{littler}. Finally, \texttt{Rserve} is \texttt{TCP/IP} server which provides low level access to an R session over a socket \citep{urbanek2013rserve}. 
 
 However even though these tools have been available for several years, they have not been able to facilitate the big break through of \R as a ubiquitous statistical engine. Given the enourmous demand for analysis and visualization these days, the adoption of \R for embedded scientific computing is actually quite underwhelming. In my experience, the primary cause for the limited success is that low-level bridges are difficult to implement, do not scale very well, and leave the most challenging problems unsolved. Substantial plumbing and expertise of \R internals is required for building actual applications on these tools. Clients are supposed to generate and push \R syntax, make sense of \R's internal \texttt{C} structures and write their own framework for managing jobs, graphics, security, data interchange, etc. In practice this is very difficult, results in messy code, and often leads to unstable applications when important issues were not fully taken care of. The tools are also impractical from a human point of view. Building a web application with for example \texttt{JRI}, \texttt{RInside} or \texttt{Rserve} requires a web developer that is also an expert in \R, as well as \texttt{C++} or \texttt{Java}. Because \R is such a domain specific language, this combination of skills is very rare. 
 
 What is needed to scale up embedded scientific computing is a system that decouples the application layer from the computational back-end, similar to how e.g. \texttt{SQL} separates the application and database. A well defined separation of concerns allows for independent development of client and server components, by different people with different background and expertise. Idealy, the system interface should describe domain logic of scientific computing and abstract implementation details as much as possible. This gives clients a universal point of interaction to perform data operations without any specialized knowledge about the computational language or infrastructure. At the same time, statisticians can expose analysis methods for use in applications without having to learn web development or other tools. Careful isolation of components along the lines of domain logic would allow developers to focus on their expertise using their tools of choice. This vision forms the starting point of this research. 
-
-
-\subsection{Scope}
-
-This paper provides an introduction to the topic of embedded scientific computing. The presented ideas are largely derived from personal experiences of developing systems and applications with integrated analysis and vizualization. We identify primary challenges and opportunities in transitioning from a \UI to \API paradigm, and moving beyond ad-hoc cross language bindings towards foundations for scalable component based data analysis. Rather than focusing on technical problems, our approach puts heavy emphasis on exploring the domain logic of the field along the lines of \citep{evans2004domain}. Scalable components require meticulous separation of concerns, and a significant share of this work is devoted to describing the concerns of scientific computing. To this end, our journey starts with an extensive review of the purpose, problems and practices of data analysis, and the implications for embedded components. The goal is to study the conceptual model of scientific computing and carefully separate it from implementation or application. This provides the requirements for a system that facilitates embedded scientific computing, and sets the stage for an interface definition.
 
 
 \subsection{The \OpenCPU system}
@@ -97,7 +79,8 @@ The \OpenCPU system is used as a reference implementation throughout this paper.
 \input{domainlogic}
 
 \input{stateproblem}
-
+ 
+\input{http}
 
 
 \section{The OpenCPU system}
@@ -108,13 +91,6 @@ As part of the research, two reference implementations were developed. The \R pa
 
 The differences between the cloud server and single user server are invisible to clients. The OpenCPU API provides a standard interface to either implementation. Other than varying performance, applications will behave the same regardless of which server is used. This shows the strenght of the system: applications can be developed locally using the single user server and published later on a shared high-performance cloud server.
 
-\subsection{About HTTP}
-
-One of the major strengths of OpenCPU is that it builds on the Hypertext Transfer Protocol (HTTP). HTTP is the most widely used appliation protocol on the internet, and the foundation of data communication in browsers and the world wide web. The protocol is defined in great detail, very mature and widely implemented. It provides all functionality required to build modern applications and has recently gained popularity for web APIs as well. 
-
-The benefit if using a standardized application protocol such as HTTP is that a lot of funtionality gets built-in by design. HTTP has excellent mechanisms for authentication, caching, distribution, etc, which we can take advantage of with very minimal effort. This allows us to focus on the domain logic of scientific computing. Because general purpose application functionality exists on the level of the protocol, the OpenCPU API itself shines in simplicify. This is an enormous advantage over many other \R interfaces, which at best implement custom ad-hoc mechanisms for such functionality. In HTTP the solutions have been available for a long time and are already implemented in every client. This reduces risks of design flaws and makes our system more accessible and easier to adopt by 3rd party clients with limited knowledge of \R.
-
-The obvious drawback is that we need to work within the restrictions of the protocol. One specific challenge discussed in a subsequent section is management of state. Because HTTP is stateless, it is not an option to simply provide access to an \R process over a socket such as done in \texttt{RServe} or \texttt{Shiny}. Instead the OpenCPU API needs to spend some additional effort in describing management of \emph{resources}. However this restriction is not merely a limitation but actually an important requirement for concurrency. The result is an elegant system for interacting with \R methods that naturally supports asynchronous requests and parallel computing. 
 
 
 \subsection{Reproducbility by design}
@@ -212,7 +188,7 @@ Clients sends no arguments.
 Interesting for reproducible research.
 
 
-\section{Input and output Formats}
+\subsection{Input and output Formats}
 
 Input and output of data formats are more somewhat more specific to R.
 Input are used for function arguments. Layer on the media types.
