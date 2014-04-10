@@ -6,29 +6,41 @@ The \OpenCPU \API defines a mapping between \HTTP requests and high-level operat
 
 What remains after cutting out implementation and application logic is a simple interface to scientific computing that separates client and server responsibility along the lines of domain expertise. The \OpenCPU \API consists of a minimal set of operations required to build applications while giving servers freedom to implement and optimize this functionality in a way that makes sense with the context of a particular computational language or environment. 
 
-\subsection{\API Concepts}
+\subsection{Concepts}
 
-As was described before, individual requests within the \OpenCPU \API are stateless and there is no notion of a \emph{process}. State of the system only changes through creation of new resources such as objects, graphics and files. This section introduces some conceptial entities and operations that the \OpenCPU \API defines as resources in client-server communication.
+As was described before, individual requests within the \OpenCPU \API are stateless and there is no notion of a \emph{process}. State of the system only changes through creation and manipulation of resources such as objects, graphics and files. This section introduces some conceptial entities and operations that the \OpenCPU \API defines.
 
-\subsubsection{objects}
+\subsubsection{objects and namespaces}
 
-Objects are the primary entities of the system and carry the same meaning as within the computation language. Objects are referred to with symbol or variable name which is unique within the namespace of the object. The \API does not distinguish between fixed objects that appear in e.g. packages, or user created objects that are created from executing scripts or function calls. The \API also does not distinguish if an object exists in memory or on disk. The \API merely provides a system for referring to objects in a way that allows clients to control them, for example to retrieve the object in a particular output format, or use it as an argument for a function call.
+Objects are the primary entities of the system and carry the same meaning as within the computation language. Objects are referred to with symbol or variable name which is unique within the namespace of the object. Each object has a unique \HTTP endpoint. The \API does not distinguish between static objects that appear in e.g. packages, or dynamic objects that get created when executing scripts or function calls, nor does it distinguish if an object exists in memory or on disk. The \API merely provides a system for referring to objects in a way that allows clients to control them, for example to retrieve the object in a particular output format, or use it as an argument in a function call.
 
-Objects are both the arguments and return value of function calls. When a client performs a remote function call, the server (not the client/user) determines the name and namespace that the output object is assigned to and includes this information in the response. Objects are non mutable and therefore the client can not change or overwrite objects. For function calls that modify the state of an object, the system creates a copy of the modified object under a new name; the original object is unaffected. In most languages, functions and function calls are objects as well and hence the server can stored these alongside the output object for reproducibility purposes. 
+A namespace is a path in the \API containing a collection of uniquely named objects. In \R, static namespaces exist in \emph{packages} and dynamic namespaces exist in \emph{environments} such as the the user workspace. The \API uses an abstract concept of a namespace which does not distinguish between static or dynamic, persistent or temporary namespaces. Clients can request a list of the contents of namespaces, although the server can refuse this request for private namespaces or hidden objects. 
 
-\begin{verbatim}
-https://public.opencpu.org/ocpu/cran/MASS/data/Boston
-https://public.opencpu.org/ocpu/cran/MASS/R/rlm
-https://public.opencpu.org/ocpu/tmp/x0d503bb5/R/t.stat
-\end{verbatim}
+\subsubsection{function calls}
+
+Performing a \texttt{POST} request on a function object invokes a function call, where the \texttt{HTTP} parameters are mapped to function arguments. Arguments can be posted using one of several input formats. 
+
+Objects are both the arguments and return value of function calls. When a client performs a remote function call, the server (not the client/user) determines the name and namespace that the output object is assigned to and includes this information in the response. Objects are non mutable and therefore the client can not change or overwrite existing objects. For function calls that modify the state of an object, the server creates a copy of the modified object under a new name and leave the original object is unaffected. In \R, the function call itself is also an object that can be stored alongside the output for reproducibility purposes. 
+
+\subsection{graphics}
+
+\subsection{manuals}
+
+- formats
+
+\subsection{files}
+
+- read
+- execute
+
+\subsection{containers}
+ 
+- packages
+- sessions
+
+\subsection{libraries}
 
 
-\subsubsection{namespaces}
-
-A namespace is a collection of objects with unique names. Like objects, the \API does not specify how namespaces are implemented and if they exist on disk or in memory. In the context of \R for example, a namespace can both refer to a package namespace, as well as any other environment. Clients can request to list the contents of a namespace.
-
-
-\subsubsection{libraries}
 
 
 
@@ -38,7 +50,7 @@ A namespace is a collection of objects with unique names. Like objects, the \API
 - files
 - manuals
 
-#session
+-
 - objects
 - graphics
 - exceptions
