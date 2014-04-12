@@ -1,0 +1,69 @@
+%meta
+\documentclass{article}
+\author{Jeroen Ooms}
+\title{The OpenCPU System:\\ Towards a Universal Interface for Scientific Computing}
+
+%some packages
+\usepackage{url}
+\usepackage{fullpage}
+\usepackage{xspace}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage[round]{natbib}
+\usepackage{fancyvrb}
+\usepackage[toc,page]{appendix}
+\usepackage{breakurl}
+
+%support for accents
+\usepackage[utf8]{inputenc}
+
+%use vspace instead of indentation for paragraphs
+\usepackage{parskip}
+
+%extra line spacing
+\usepackage{setspace}
+\setstretch{1.2}
+
+%custom commands
+\newcommand{\HTML}{\texttt{HTML}\xspace}
+\newcommand{\GET}{\texttt{GET}\xspace}
+\newcommand{\POST}{\texttt{POST}\xspace}
+\newcommand{\JSON}{\texttt{JSON}\xspace}
+\newcommand{\SQL}{\texttt{SQL}\xspace}
+\newcommand{\CGI}{\texttt{CGI}\xspace}
+\newcommand{\R}{\texttt{R}\xspace}
+\newcommand{\HTTP}{\texttt{HTTP}\xspace}
+\newcommand{\TCP}{\texttt{TCP}\xspace}
+\newcommand{\IP}{\texttt{IP}\xspace}
+\newcommand{\GUI}{\texttt{GUI}\xspace}
+\newcommand{\CLI}{\texttt{CLI}\xspace}
+\newcommand{\UI}{\texttt{UI}\xspace}
+\newcommand{\API}{\texttt{API}\xspace}
+\newcommand{\RPC}{\texttt{RPC}\xspace}
+\newcommand{\ID}{\texttt{ID}\xspace}
+\newcommand{\OpenCPU}{\texttt{OpenCPU}\xspace}
+\newcommand{\Latex}{\LaTeX \xspace}
+%actual doc
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+A vital part of facilitating embedded scientific computing is specification of the interface. Clients or systems integrating analytical components require a simple well interface that exposes desired functionality and hides implementation details. Currently, most statistical software is designed for UI rather than API interaction which presents some challenges when turning methods into components. Because scientific computing is highly interactive, the role of \emph{state} is the central problem in the design of an interface. This paper introduces OpenCPU: a system for embedded scientific computing based on R. The OpenCPU API is described in detail and used to exemplify interoperability of statistical methods by decoupling application from statistical computation. Because OpenCPU leverages native features of HTTP, it can easily be extended and no knowledge of R is required to implement clients. We finish by showing how the OpenCPU makes it trivial to turn R packages into webapps.
+\end{abstract}
+
+
+\input{introduction}
+
+\input{domainlogic}
+
+\input{stateproblem}
+ 
+\input{http}
+
+
+
+\bibliographystyle{plainnat}
+\bibliography{thesis}
+\end{document}
