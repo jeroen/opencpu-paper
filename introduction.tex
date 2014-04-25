@@ -16,18 +16,12 @@ What is needed to scale up embedded scientific computing is a system that decoup
 
 In order to develop a system that can separate concerns of embedded scientific computing from other parts of the system, we need to ask ourselves the question: \emph{``what are the concerns of data analysis?''} This question does not have an easy answer. Over the years statistical softare has gotten highly convoluted by the inclusion of complementary tools that are useful but not neccessarily an integral part of computing itself. Separation of concerns requires us to extract the core logic of scientific computing and divorce it from all other apparatus. Our goal is to define a conceptual model of data analysis that is independent of any particular application or implementation. Therefore, rather than discussing technical problems, this paper focuses entirely on exploring the domain logic of the discipline along the lines of \cite{evans2004domain}. Through an extensive review of the purpose, problems and practices of scientific computing we try to unveil the fundamental principles behind the software. Along the way we highlight important problems and bottlenecks that need to be addressed by the system in order to facilicate reliable and scalable analysis units.
 
+The end goal of this paper is to work towards an interface definition for embedded scientific computing. An interface is the embodiment of separation of concerns and serves as a contract that formalizes the boundary across which separate components exchange information. The interface definition describes the concepts and operations that components agree upon to cooperate and how the communication is arranged. Through the interface we specify the functionality that a server has to implement, which parts of the interaction are fixed and which choices are specifically left at the discretion of the implementation. Idealy the specification should provide sufficient structure to develop clients and server components for scientific computing while minimizing limitations on how these can be implemented. An interface that carefully isolates components along the lines of domain logic allows developers to focus on their expertise using their tools of choice. It gives clients a universal point of interaction to integrate statistical computing without understanding language specifics, and allow statisticians to implement methods for use in applications without knowing any specifics about the application layer.
 
 
 
 
 
-
-This provides the requirements for a system that facilitates embedded scientific computing, and sets the stage for an interface definition. Idealy, the system interface should describe domain logic of scientific computing and abstract implementation details as much as possible. This gives clients a universal point of interaction to perform data operations without any specialized knowledge about the computational language or infrastructure. At the same time, statisticians can expose analysis methods for use in applications without having to learn web development or other tools. Careful isolation of components along the lines of domain logic would allow developers to focus on their expertise using their tools of choice. This vision forms the starting point of this research. 
-
-
-%- interface serves as a contract between clients and servers that formalizes separation of concerns
-%- the interface determines the functionality that the server implements and which parts of the communication are fixed.
-%- It also determines which parts are at the discrition of the server implementation.
 %- think in analogy of SQL describing relational data management
 
 
