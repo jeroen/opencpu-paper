@@ -5,59 +5,81 @@ One of the major strengths of \OpenCPU is that it builds on the hypertext transf
 
 The \OpenCPU \API defines a mapping between \HTTP requests and high-level operations in scientific computing such as calling functions, running scripts, access to data, manual pages and management of files and objects. The \API specifically does not prescribe any language implementation details. Syntax and low-level concerns such as process management or code evaluation are abstracted and at the discretion of the server implementation. The \API also does not describe any logic which can be taken care of on the protocol or application layer. For example, to add support for authentication, any of the standard mechanisms can be used such as \texttt{basic auth} \citep{franks1999rfc} or \texttt{OAuth 2.0} \citep{hardt2012oauth}. The implementation of such authentication methods might vary from a simple server configuration to defining additional endpoints. However authentication will not affect the meaning of the \API itself and can therefore considered independent of this research. The same holds for other native features of the \HTTP protocol which can be used in conjunction with \OpenCPU, or any other \HTTP \API for that matter. 
 
-What remains after cutting out implementation and application logic is a simple interface to scientific computing that separates client and server responsibility along the lines of domain expertise. The \OpenCPU \API consists of a minimal set of operations required to build applications while giving servers freedom to implement and optimize this functionality in a way that makes sense with the context of a particular computational language or environment. The remainder of section introduces the principal entities and operations defined by the \API. As was described before, individual requests within the \OpenCPU \API are stateless and there is no notion of a \emph{process}. State of the system changes through creation and manipulation of resources such as objects, graphics and files. 
+What remains after cutting out implementation and application logic is a simple interface to scientific computing that separates client and server responsibility along the lines of domain expertise. The \OpenCPU \API consists of a minimal set of operations required to build applications while giving servers freedom to implement and optimize this functionality in a way that makes sense with the context of a particular computational language or environment. 
 
-\subsection{Objects}
+\subsection{OpenCPU Concepts}
+
+This section introduces the principal entities and operations defined by the \API. As was described before, individual requests within the \OpenCPU \API are stateless and there is no notion of a \emph{process}. State of the system changes through creation and manipulation of resources such as objects, graphics and files. 
+
+\subsubsection{Objects}
 
 Objects are the main entities of the system and carry the same meaning as within a functional language. Objects can be functions, data structures, or other types supported by the back-end language (for example \R). The client needs no knowledge of the implementation of these objects. Analogous to a \CLI, the primary purpose of the \API is managing objects and performing remote procedure calls. Management of objects includes functionality such as creating, retrieving and publishing objects. Objects on the server may also be used as arguments in a remote function call. Objects created from executing a script or returned by a function call are automatically stored and gain the same status as other existing objects.
 
 Each object has an individual endpoint within the \API and unique name or key within its namespace. The \API does not distinguish between static objects that appear in e.g. packages, or dynamic objects created by users, nor does it distinguish between objects in memory or on disk. The \API merely provides a system for referencing objects in a way that allows clients to control them, for example to retrieve an object in a particular output format or used as an argument in a function call. The implementation of persistence, caching and expiration of objects is at the discretion of the server. 
 
-\subsection{Namespaces}
+\subsubsection{Namespaces}
 
 A namespace is a collection of uniquely named objects with a given path in the \API. In \R, static namespaces are implemented using \emph{packages} and dynamic namespaces exist in \emph{environments} such as the user workspace. However \OpenCPU abstracts the concept of a namespace as any set of objects and does not distinguish between static or dynamic, persistent or temporary namespaces. Clients can request a list of the contents of any namespace, however the server might refuse such a request for private namespaces or hidden objects. 
 
-\subsection{Formats}
+\subsubsection{Formats}
 
 \OpenCPU explicitly differentiates a resource from a \emph{representation} of that resource in a particular \emph{format}. The \API lets the client rather than the server decide on the format used to serve content. This is a difference with common scientific practices of exchanging data, documents and figures in fixed format files. Resources in \OpenCPU can be retrieved using various output formats and formatting parameters. For example a basic dataset can be retrieved in \texttt{csv}, \texttt{json}, \texttt{Protocol Buffers} or \texttt{tab delimited} format. Similarly, a graphic can be retrieved in \texttt{svg}, \texttt{png} or \texttt{pdf} and manual pages can be retrieved in \texttt{text}, \texttt{html} or \texttt{pdf} format. In addition to the format, the client can specify formatting parameters in the request. For example for \texttt{png} format has parameters such as \texttt{width} and \texttt{height}, whereas the \texttt{tab delimited} format has parameters \texttt{sep}, \texttt{eol}, \texttt{dec} which specify the delimiting, end-of-line and decimal character respectively. The system supports many additional formats, but not every format is appropriate for every resource type. When a client requests a resource in a format using an invalid format, the server responds with an error. 
 
-\subsection{Data}
+\subsubsection{Data}
 
 The \API defines a seperate entity for \emph{data} objects. Even though data can technically be treated as general objects, in practice they often serve a different purpose. For example data are usually not language specific and can not be called or executed. Therefore it is often suitable to conceptually distinguish this subset of objects. For example \R uses lazy loading of data objects to save memory when for packages containing large datasets.
 
-
-
-\subsection{Graphics}
+\subsubsection{Graphics}
 
 Any function call can produce zero or more graphics. After completing a remote function call, the server reports how many graphics were created and provides the key for referencing these graphics. Clients can retrieve each individual graphic in subsequent requests using one of various output formats such as \texttt{png}, \texttt{pdf}, and \texttt{svg}. Where appropriate the client can specify additional formatting paramters during the retrieval of the graphic such as width, height or font size.
 
-\subsection{Files}
+\subsubsection{Files}
 
 Files can be uploaded and downloaded using standard \HTTP mechanics. The client can post a file as an argument in a remote function call, or download files that were saved to the working directory by the function call. Support for files also allows for hosting web pages (e.g. \texttt{html}, \texttt{css}, \texttt{js}) that interact with local \API endpoints to serve a web application. Furthermore as described below files can be used as arguments to remote function calls, and files that are recognized as \emph{scripts} can be executed using \RPC.
 
-\subsection{Manuals}
+\subsubsection{Manuals}
 
 In most scientific computing languages, each function or dataset that is available to the user is accompanied by an identically named manual page. This manual page includes information such as description and usage of functions and their arguments, or explanation and comments about the columns within a particular dataset. The \API defines a standard way of requesting such manual pages in a particular format.
 
-\subsection{Containers}
+\subsubsection{Containers}
  
 We refer to a path on the server containing one or more of the above resources as a \emph{container}. The current \R based \OpenCPU implementation supports two types of containers. A \emph{package} is a static container which may include a namespace with objects, manual pages, data and files. A \emph{session} is another type of container that holds outputs created from executing a script or function call, including a namespace with objects, graphics and files. However the \API does not differentiate between the various container types: interacting with an object or file works the same, regardless of whether it is part of a package or session.
 
-\subsection{Libraries}
+\subsubsection{Libraries}
 
 A collection of containers is called a \emph{library}. In \R terminology a library is a directory on disk with installed packages. However within the context of the \API, the term is more general and refers to any set of containers. For example the \texttt{tmp} library is the \API path containing temporary session containers. Also the \API notion of a library does not require packages to be preintsalled. A remote set of packages, which in \R terminology is called a \emph{respository}, is also a library but the \API does not make this distinction. For example the current implementation exposes the \texttt{cran} library which refers to all packages that are \emph{current} on the \texttt{CRAN} repository. In \API terms interacting with \texttt{cran} packages is no different from interacting with locally installed packages. The \API leaves it up to the server implementation which types of libraries it wishes to expose and how to synchronize remote repositories (e.g. cron jobs or on-the-fly package installations).
 
-\subsection{RPC requests}
+\subsubsection{RPC requests}
 
 A \POST request in \OpenCPU invokes a remote procedure call (\RPC). Requests targeting a \emph{function} object result in a function call where the \HTTP parameters from the post body are mapped to function \emph{arguments}. Similarly, a \texttt{POST} targeting a \emph{script} results in execution of the script where \HTTP parameters are passed to the script interpreter. The current \OpenCPU implementation recognizes scripts by their file extension, and supports \R, \texttt{latex}, \texttt{markdown}, \texttt{Sweave} and \texttt{knitr} scripts. We use the term \RPC to refer to both remote function calls and remote script executions. One conceptual difference with a terminal interface is that in the \OpenCPU \API, the server determines the name and namespace that output of a function call is assigned to. The server includes a \emph{key} in the \RPC response that serves the same role as a variable name and is used to reference the newly created resources in future requests. Besides the return value, the server stores graphics, files, warnings, messages and \texttt{stdout} that were created during the function call. These contents can be listed and retrieved using the same key as for the object. In \R, the function call itself is also an object which is added to the collection for reproducibility purposes. Objects on the system are non mutable and therefore the client can not change or overwrite existing keys or objects. For function calls that modify the state of an object, the server creates a copy of the modified object under a new name and leaves the original unaffected.
 
-\subsection{RPC Arguments}
+\subsubsection{RPC Arguments}
 
 Arguments to a remote function call can be posted using one of several methods. A data interchange format such as \JSON or \texttt{Protocol Buffers} can be used to directly post data structures such as lists, vectors, matrices or data frames. Alternatively the client can reference an existing object on the server using a key or name. The server automatically resolves keys and converts data structures into native objects which are used as arguments in the function call. Hence the function that is called is not restricted to a particular data interchange format. Files can also be used as arguments within remote function calls. Any files contained in a \texttt{multipart/form-data}  post request will be copied to the working directory before the function call is executed. The server then sets the argument in the function call to the \texttt{filename}. Thereby we can remotely call functions with a file argument using standard \HTML form submission.
 
 
-\subsection{Reproducibility}
+\subsubsection{Reproducibility}
 
 The \OpenCPU specification makes reproducibility an integrated part of the \API interaction. For each \RPC request the server needs to store the call, script, arguments or input files, in addition to results. The same key that is used to retrieve output resources such as objects or graphics, can be used to retrieve the input resources or automatically replicate the entire computation. Hence for each output resource on the system, clients can lookup the code, data, warnings and packages that were involved in the creation of an object. Thereby results can easily and automatically be recalculated, which forms a powerful foundation for reproducible practices. However this system can also be used for other purposes. For example, if a procedure fetches dynamic data from an external resource to generate a model or plot, we can use reproduction to \emph{update} the model or plot with the latest data.
 
-\section{Examples}
+\subsection{HTTP details}
+
+The current \API uses two methods: \GET and \POST. As per \HTTP standards, \HTTP \GET is a \emph{safe} method which means it is intended only for information retrieval and should not change the state of the server. The \HTTP \POST methods on the other hand results in a remote function call or script execution which does change the server state.
+
+\begin{table}[h]
+\def\arraystretch{1.5}%
+\begin{tabular}{@{}lllll@{}}
+\toprule
+Method & Target & Action  & Arguments     & Example                                             \\ \midrule
+\texttt{GET}    & object  & retrieve      & format parameters     & \texttt{GET /ocpu/library/datasets/R/mtcars/json}            \\
+                & graphic & render        & rendering parameters  & \texttt{GET /ocpu/tmp/x09362873/graphics/1/png}            \\
+                & file    & download      & -                     & \texttt{GET /ocpu/library/MASS/NEWS}                         \\
+                & dir     & list contents & -                     & \texttt{GET /ocpu/library/MASS/scripts/}                     \\ \bottomrule
+\texttt{POST}   & object  & call function & function arguments    & \texttt{POST /ocpu/library/stats/R/rnorm}                    \\
+                & file    & run script    & control interpreter   & \texttt{POST /ocpu/library/MASS/scripts/ch01.R}              \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Status codes}
+
+
