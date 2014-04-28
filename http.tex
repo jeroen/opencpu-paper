@@ -64,7 +64,7 @@ The \OpenCPU specification makes reproducibility an integrated part of the \API 
 
 \subsection{HTTP details}
 
-The current \API uses two methods: \GET and \POST. As per \HTTP standards, \HTTP \GET is a \emph{safe} method which means it is intended only for information retrieval and should not change the state of the server. The \HTTP \POST methods on the other hand results in a remote function call or script execution which does change the server state.
+The current \API uses two methods: \GET and \POST. As per \HTTP standards, \HTTP \GET is a \emph{safe} method which means it is intended only for information retrieval and should not change the state of the server. The \GET method can be used to retrieve objects, manuals, graphics or files. The parameters of the request are mapped to the formatting function. A \GET requests targeting a container, namespace or directory is used to list the contents. The \HTTP \POST method on the other is used for \RPC which does change the server state. A \POST request targeting a function results in a remote function call where the \HTTP parameters are mapped to function arguments. A \POST request targeting a script results in an execution of the script where \HTTP parameters are mapped to the script interpreter.
 
 \begin{table}[h]
 \def\arraystretch{1.5}%
@@ -72,9 +72,10 @@ The current \API uses two methods: \GET and \POST. As per \HTTP standards, \HTTP
 \toprule
 Method & Target & Action  & Arguments     & Example                                             \\ \midrule
 \texttt{GET}    & object  & retrieve      & format parameters     & \texttt{GET /ocpu/library/datasets/R/mtcars/json}            \\
-                & graphic & render        & rendering parameters  & \texttt{GET /ocpu/tmp/x09362873/graphics/1/png}            \\
+                & manual  & read          & format parameters     & \texttt{GET /ocpu/library/MASS/man/rlm/html}            \\  
+                & graphic & render        & graphic parameters    & \texttt{GET /ocpu/tmp/x09362873/graphics/1/png}            \\   
                 & file    & download      & -                     & \texttt{GET /ocpu/library/MASS/NEWS}                         \\
-                & dir     & list contents & -                     & \texttt{GET /ocpu/library/MASS/scripts/}                     \\ \bottomrule
+                & path    & list contents & -                     & \texttt{GET /ocpu/library/MASS/scripts/}                     \\ \bottomrule
 \texttt{POST}   & object  & call function & function arguments    & \texttt{POST /ocpu/library/stats/R/rnorm}                    \\
                 & file    & run script    & control interpreter   & \texttt{POST /ocpu/library/MASS/scripts/ch01.R}              \\ \bottomrule
 \end{tabular}
