@@ -51,7 +51,9 @@ A collection of containers is called a \emph{library}. In \R terminology a libra
 
 \subsubsection{RPC requests}
 
-A \POST request in \OpenCPU invokes a remote procedure call (\RPC). Requests targeting a \emph{function} object result in a function call where the \HTTP parameters from the post body are mapped to function \emph{arguments}. Similarly, a \texttt{POST} targeting a \emph{script} results in execution of the script where \HTTP parameters are passed to the script interpreter. The current \OpenCPU implementation recognizes scripts by their file extension, and supports \R, \texttt{latex}, \texttt{markdown}, \texttt{Sweave} and \texttt{knitr} scripts. We use the term \RPC to refer to both remote function calls and remote script executions. One conceptual difference with a terminal interface is that in the \OpenCPU \API, the server determines the name and namespace that output of a function call is assigned to. The server includes a \emph{key} in the \RPC response that serves the same role as a variable name and is used to reference the newly created resources in future requests. Besides the return value, the server stores graphics, files, warnings, messages and \texttt{stdout} that were created during the function call. These contents can be listed and retrieved using the same key as for the object. In \R, the function call itself is also an object which is added to the collection for reproducibility purposes. Objects on the system are non mutable and therefore the client can not change or overwrite existing keys or objects. For function calls that modify the state of an object, the server creates a copy of the modified object under a new name and leaves the original unaffected.
+A \POST request in \OpenCPU invokes a remote procedure call (\RPC). Requests targeting a \emph{function} object result in a function call where the \HTTP parameters from the post body are mapped to function \emph{arguments}. Similarly, a \texttt{POST} targeting a \emph{script} results in execution of the script where \HTTP parameters are passed to the script interpreter. The current \OpenCPU implementation recognizes scripts by their file extension, and supports \R, \texttt{latex}, \texttt{markdown}, \texttt{Sweave} and \texttt{knitr} scripts. We use the term \RPC to refer to both remote function calls and remote script executions. One conceptual difference with a terminal interface is that in the \OpenCPU \API, the server determines the name and namespace that output of a function call is assigned to. The server includes a temporary \emph{key} in the \RPC response that serves the same role as a variable name and is used to reference the newly created resources in future requests. This key is private and the client should treat it confidentially.
+
+Besides the return value, the server stores graphics, files, warnings, messages and \texttt{stdout} that were created during the function call. These contents can be listed and retrieved using the same key as for the object. In \R, the function call itself is also an object which is added to the collection for reproducibility purposes. Objects on the system are non mutable and therefore the client can not change or overwrite existing keys or objects. For function calls that modify the state of an object, the server creates a copy of the modified object under a new name and leaves the original unaffected.
 
 \subsubsection{RPC Arguments}
 
@@ -74,12 +76,12 @@ The current \API uses two methods: \GET and \POST. As per \HTTP standards, \HTTP
 \def\arraystretch{1.5}%
 \begin{tabular}{@{}lllll@{}}
 \toprule
-Method & Target & Action  & Parameters     & Example                                             \\ \midrule
+\emph{Method} & \emph{Target} & \emph{Action}  & \emph{Parameters}     & \emph{Example}                                      \\ \midrule
 \texttt{GET}    & object  & retrieve      &  formatting     & \texttt{GET /ocpu/library/datasets/R/mtcars/json}            \\
                 & manual  & read          &  formatting     & \texttt{GET /ocpu/library/MASS/man/rlm/html}            \\  
                 & graphic & render        &  formatting    & \texttt{GET /ocpu/tmp/\{key\}/graphics/1/png}            \\   
                 & file    & download      & -                     & \texttt{GET /ocpu/library/MASS/NEWS}                         \\
-                & path    & list contents & -                     & \texttt{GET /ocpu/library/MASS/scripts/}                     \\ \bottomrule
+                & path    & list contents & -                     & \texttt{GET /ocpu/library/MASS/scripts/}                     \\ \midrule
 \texttt{POST}   & object  & call function & function arguments    & \texttt{POST /ocpu/library/stats/R/rnorm}                    \\
                 & file    & run script    & control interpreter   & \texttt{POST /ocpu/library/MASS/scripts/ch01.R}              \\ \bottomrule
 \end{tabular}
@@ -89,18 +91,20 @@ Method & Target & Action  & Parameters     & Example                            
 
 The following are common \HTTP status codes returned by \OpenCPU that the client should be able to interpret. The meaning of these status codes is conform \HTTP standards. These are somewhat specific to the current implementation. 
 
+
+
 \begin{table}[h]
 \def\arraystretch{1.5}%
-\begin{tabular}{@{}lll@{}}
+\noindent\begin{tabularx}{\columnwidth}{ *{3}{X} }
 \toprule
-Status Code              & Happens when                                                   & Response content                             \\ \midrule
-\texttt{200 OK}          & On successful \texttt{GET} request                     & Resource content                    \\
+\emph{Status Code}              & \emph{Happens when}                             & \emph{Content}                     \\ \midrule
+\texttt{200 OK}          & On successful \texttt{GET} request                     & Requested data                    \\
 \texttt{201 Created}     & On successful \texttt{POST} request                    & Output location                     \\
-\texttt{302 Found}       & Redirect                                               & Redirect Location                   \\
-\texttt{400 Bad Request} & R raised an error.                                     & Error message in \texttt{text/plain} \\
-\texttt{502 Bad Gateway} & Cache connectivity failure.                            & -- (See error logs) \\
-\texttt{503 Bad Request} & Back-end server failure.                                & -- (See error logs) \\ \bottomrule
-\end{tabular}
+\texttt{302 Found}       & Redirect                                               & Redirect location                   \\
+\texttt{400 Bad Request} & Computational error in \R                                     & Error message in \texttt{text/plain} \\
+\texttt{502 Bad Gateway} & Back-end server offline                            & -- (See error logs) \\
+\texttt{503 Bad Request} & Back-end server failure                                & -- (See error logs) \\ \bottomrule                          
+\end{tabularx}
 \end{table}
 
 \subsubsection{Output formats}
@@ -109,7 +113,7 @@ Status Code              & Happens when                                         
 \def\arraystretch{1.5}%
 \begin{tabular}{@{}lllll@{}}
 \toprule
- Format & \texttt{Content-type}             & Encoding function      & Example    \\ \midrule
+ \emph{Format} & \emph{Content-type}             & \emph{Encoding function}      & \emph{Example}    \\ \midrule
  \texttt{print}  & \texttt{text/plain}               & \texttt{base::print}    & \texttt{/ocpu/cran/MASS/R/rlm/print}          \\
  \texttt{rda}    & \texttt{application/octet-stream} & \texttt{base::save}     & \texttt{/ocpu/cran/MASS/data/cats/rda}          \\
  \texttt{rds}    & \texttt{application/octet-stream} & \texttt{base::saveRDS}  & \texttt{/ocpu/cran/MASS/data/cats/rds}          \\
@@ -122,3 +126,4 @@ Status Code              & Happens when                                         
  \texttt{svg}    & \texttt{image/svg+xml}            & \texttt{grDevices::svg}      & \texttt{/ocpu/tmp/\{key\}/graphics/1/svg}     \\ \bottomrule
 \end{tabular}
 \end{table}
+
