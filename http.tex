@@ -7,7 +7,7 @@ The \OpenCPU \API defines a mapping between \HTTP requests and high-level operat
 
 What remains after cutting out implementation and application logic is a simple interface to scientific computing that separates client and server responsibility along the lines of domain expertise. The \OpenCPU \API consists of a minimal set of operations required to build applications while giving servers freedom to implement and optimize this functionality in a way that makes sense with the context of a particular computational language or environment. 
 
-\subsection{OpenCPU Concepts}
+\subsection{Concepts}
 
 This section introduces the principal entities and operations defined by the \API. As was described before, individual requests within the \OpenCPU \API are stateless and there is no notion of a \emph{process}. State of the system changes through creation and manipulation of resources such as objects, graphics and files. 
 
@@ -62,7 +62,11 @@ Arguments to a remote function call can be posted using one of several methods. 
 
 The \OpenCPU specification makes reproducibility an integrated part of the \API interaction. For each \RPC request the server needs to store the call, script, arguments or input files, in addition to results. The same key that is used to retrieve output resources such as objects or graphics, can be used to retrieve the input resources or automatically replicate the entire computation. Hence for each output resource on the system, clients can lookup the code, data, warnings and packages that were involved in the creation of an object. Thereby results can easily and automatically be recalculated, which forms a powerful foundation for reproducible practices. However this system can also be used for other purposes. For example, if a procedure fetches dynamic data from an external resource to generate a model or plot, we can use reproduction to \emph{update} the model or plot with the latest data.
 
-\subsection{HTTP details}
+\subsection{API details}
+
+The root of the API is dynamic. It defaults to \texttt{/ocpu/} however system administrators can change this. Clients should make the \OpenCPU server address and root path configurable. In the examples below we assume the default \texttt{/ocpu/}.
+
+\subsubsection{Methods}
 
 The current \API uses two methods: \GET and \POST. As per \HTTP standards, \HTTP \GET is a \emph{safe} method which means it is intended only for information retrieval and should not change the state of the server. The \GET method can be used to retrieve objects, manuals, graphics or files. The parameters of the request are mapped to the formatting function. A \GET requests targeting a container, namespace or directory is used to list the contents. The \HTTP \POST method on the other is used for \RPC which does change the server state. A \POST request targeting a function results in a remote function call where the \HTTP parameters are mapped to function arguments. A \POST request targeting a script results in an execution of the script where \HTTP parameters are mapped to the script interpreter.
 
@@ -70,10 +74,10 @@ The current \API uses two methods: \GET and \POST. As per \HTTP standards, \HTTP
 \def\arraystretch{1.5}%
 \begin{tabular}{@{}lllll@{}}
 \toprule
-Method & Target & Action  & Arguments     & Example                                             \\ \midrule
-\texttt{GET}    & object  & retrieve      & format parameters     & \texttt{GET /ocpu/library/datasets/R/mtcars/json}            \\
-                & manual  & read          & format parameters     & \texttt{GET /ocpu/library/MASS/man/rlm/html}            \\  
-                & graphic & render        & graphic parameters    & \texttt{GET /ocpu/tmp/x09362873/graphics/1/png}            \\   
+Method & Target & Action  & Parameters     & Example                                             \\ \midrule
+\texttt{GET}    & object  & retrieve      &  formatting     & \texttt{GET /ocpu/library/datasets/R/mtcars/json}            \\
+                & manual  & read          &  formatting     & \texttt{GET /ocpu/library/MASS/man/rlm/html}            \\  
+                & graphic & render        &  formatting    & \texttt{GET /ocpu/tmp/\{key\}/graphics/1/png}            \\   
                 & file    & download      & -                     & \texttt{GET /ocpu/library/MASS/NEWS}                         \\
                 & path    & list contents & -                     & \texttt{GET /ocpu/library/MASS/scripts/}                     \\ \bottomrule
 \texttt{POST}   & object  & call function & function arguments    & \texttt{POST /ocpu/library/stats/R/rnorm}                    \\
@@ -83,4 +87,38 @@ Method & Target & Action  & Arguments     & Example                             
 
 \subsubsection{Status codes}
 
+The following are common \HTTP status codes returned by \OpenCPU that the client should be able to interpret. The meaning of these status codes is conform \HTTP standards. These are somewhat specific to the current implementation. 
 
+\begin{table}[h]
+\def\arraystretch{1.5}%
+\begin{tabular}{@{}lll@{}}
+\toprule
+Status Code              & Happens when                                                   & Response content                             \\ \midrule
+\texttt{200 OK}          & On successful \texttt{GET} request                     & Resource content                    \\
+\texttt{201 Created}     & On successful \texttt{POST} request                    & Output location                     \\
+\texttt{302 Found}       & Redirect                                               & Redirect Location                   \\
+\texttt{400 Bad Request} & R raised an error.                                     & Error message in \texttt{text/plain} \\
+\texttt{502 Bad Gateway} & Cache connectivity failure.                            & -- (See error logs) \\
+\texttt{503 Bad Request} & Back-end server failure.                                & -- (See error logs) \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Output formats}
+
+\begin{table}[h]
+\def\arraystretch{1.5}%
+\begin{tabular}{@{}lllll@{}}
+\toprule
+ Format & \texttt{Content-type}             & Encoding function      & Example    \\ \midrule
+ \texttt{print}  & \texttt{text/plain}               & \texttt{base::print}    & \texttt{/ocpu/cran/MASS/R/rlm/print}          \\
+ \texttt{rda}    & \texttt{application/octet-stream} & \texttt{base::save}     & \texttt{/ocpu/cran/MASS/data/cats/rda}          \\
+ \texttt{rds}    & \texttt{application/octet-stream} & \texttt{base::saveRDS}  & \texttt{/ocpu/cran/MASS/data/cats/rds}          \\
+ \texttt{json}   & \texttt{application/json}         & \texttt{jsonlite::toJSON}   & \texttt{/ocpu/cran/MASS/data/cats/json}      \\
+ \texttt{pb}     & \texttt{application/x-protobuf}   & \texttt{RProtoBuf::serialize\_pb} & \texttt{/ocpu/cran/MASS/data/cats/pb} \\
+ \texttt{tab}    & \texttt{text/plain}               & \texttt{utils::write.table}   & \texttt{/ocpu/cran/MASS/data/cats/tab}    \\
+ \texttt{csv}    & \texttt{text/csv}                 & \texttt{utils::write.csv}    & \texttt{/ocpu/cran/MASS/data/cats/csv}     \\
+ \texttt{png}    & \texttt{image/png}                & \texttt{grDevices::png}      & \texttt{/ocpu/tmp/\{key\}/graphics/1/png}    \\
+ \texttt{pdf}    & \texttt{application/pdf}          & \texttt{grDevices::pdf}      & \texttt{/ocpu/tmp/\{key\}/graphics/1/pdf}     \\
+ \texttt{svg}    & \texttt{image/svg+xml}            & \texttt{grDevices::svg}      & \texttt{/ocpu/tmp/\{key\}/graphics/1/svg}     \\ \bottomrule
+\end{tabular}
+\end{table}
