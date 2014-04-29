@@ -1,5 +1,10 @@
 % !TEX root = main.tex
-\section{The OpenCPU HTTP API}
+\section{The OpenCPU system}
+
+This section fills in the details of the \OpenCPU system. It is explained how the abstract concepts get shape in the context of \HTTP and how these were implemented using \R. 
+
+
+\subsection{Why HTTP}
 
 One of the major strengths of \OpenCPU is that it builds on the hypertext transfer protocol. \HTTP is the most used application protocol on the internet, and the foundation of data communication in browsers and the world wide web. The \HTTP specification is very mature, highly optimized and widely implemented. It provides all functionality required to build modern applications and has recently gained popularity for web \API's as well. The benefit of using a standardized application protocol such as \HTTP is that a lot of funtionality gets built-in by design. \HTTP has excellent mechanisms for authentication, encryption, caching, distribution, concurrency, error handling, etc. This allows us to defer most appliation logic of our system to the protocol and limit the \API specification to domain logic of scientific computing. The result is a simple and interoperable interface that is easy to learn and can be implemented with standard \HTTP software libraries. This is an enormous advantage over many other interfaces to \R and critical to make the system scalable and extensible. 
 
@@ -23,7 +28,7 @@ A namespace is a collection of uniquely named objects with a given path in the \
 
 \subsubsection{Formats}
 
-\OpenCPU explicitly differentiates a resource from a \emph{representation} of that resource in a particular \emph{format}. The \API lets the client rather than the server decide on the format used to serve content. This is a difference with common scientific practices of exchanging data, documents and figures in fixed format files. Resources in \OpenCPU can be retrieved using various output formats and formatting parameters. For example a basic dataset can be retrieved in \texttt{csv}, \texttt{json}, \texttt{Protocol Buffers} or \texttt{tab delimited} format. Similarly, a graphic can be retrieved in \texttt{svg}, \texttt{png} or \texttt{pdf} and manual pages can be retrieved in \texttt{text}, \texttt{html} or \texttt{pdf} format. In addition to the format, the client can specify formatting parameters in the request. For example for \texttt{png} format has parameters such as \texttt{width} and \texttt{height}, whereas the \texttt{tab delimited} format has parameters \texttt{sep}, \texttt{eol}, \texttt{dec} which specify the delimiting, end-of-line and decimal character respectively. The system supports many additional formats, but not every format is appropriate for every resource type. When a client requests a resource in a format using an invalid format, the server responds with an error. 
+\OpenCPU explicitly differentiates a resource from a \emph{representation} of that resource in a particular \emph{format}. The \API lets the client rather than the server decide on the format used to serve content. This is a difference with common scientific practices of exchanging data, documents and figures in fixed format files. Resources in \OpenCPU can be retrieved using various output formats and formatting parameters. For example a basic dataset can be retrieved in \texttt{csv}, \texttt{json}, \texttt{Protocol Buffers} or \texttt{tab delimited} format. Similarly, a graphic can be retrieved in \texttt{svg}, \texttt{png} or \texttt{pdf} and manual pages can be retrieved in \texttt{text}, \texttt{html} or \texttt{pdf} format. In addition to the format, the client can specify formatting parameters in the request. The system supports many additional formats, but not every format is appropriate for every resource type. When a client requests a resource in a format using an invalid format, the server responds with an error. 
 
 \subsubsection{Data}
 
@@ -64,13 +69,13 @@ Arguments to a remote function call can be posted using one of several methods. 
 
 The \OpenCPU specification makes reproducibility an integrated part of the \API interaction. For each \RPC request the server needs to store the call, script, arguments or input files, in addition to results. The same key that is used to retrieve output resources such as objects or graphics, can be used to retrieve the input resources or automatically replicate the entire computation. Hence for each output resource on the system, clients can lookup the code, data, warnings and packages that were involved in the creation of an object. Thereby results can easily and automatically be recalculated, which forms a powerful foundation for reproducible practices. However this system can also be used for other purposes. For example, if a procedure fetches dynamic data from an external resource to generate a model or plot, we can use reproduction to \emph{update} the model or plot with the latest data.
 
-\subsection{API details}
+\subsection{Implementation details}
 
 The root of the API is dynamic. It defaults to \texttt{/ocpu/} however system administrators can change this. Clients should make the \OpenCPU server address and root path configurable. In the examples below we assume the default \texttt{/ocpu/}.
 
 \subsubsection{Methods}
 
-The current \API uses two methods: \GET and \POST. As per \HTTP standards, \HTTP \GET is a \emph{safe} method which means it is intended only for information retrieval and should not change the state of the server. The \GET method can be used to retrieve objects, manuals, graphics or files. The parameters of the request are mapped to the formatting function. A \GET requests targeting a container, namespace or directory is used to list the contents. The \HTTP \POST method on the other is used for \RPC which does change the server state. A \POST request targeting a function results in a remote function call where the \HTTP parameters are mapped to function arguments. A \POST request targeting a script results in an execution of the script where \HTTP parameters are mapped to the script interpreter.
+The current \API uses two methods: \GET and \POST. As per \HTTP standards, \HTTP \GET is a \emph{safe} method which means it is intended only for information retrieval and should not change the state of the server. The \GET method is used to retrieve objects, manuals, graphics or files. The parameters of the request are mapped to the formatting function. A \GET requests targeting a container, namespace or directory is used to list the contents. The \HTTP \POST method on the other is used for \RPC which does change the server state. A \POST request targeting a function results in a remote function call where the \HTTP parameters are mapped to function arguments. A \POST request targeting a script results in an execution of the script where \HTTP parameters are mapped to the script interpreter. 
 
 \begin{table}[h]
 \def\arraystretch{1.5}%
@@ -85,13 +90,13 @@ The current \API uses two methods: \GET and \POST. As per \HTTP standards, \HTTP
 \texttt{POST}   & object  & call function & function arguments    & \texttt{POST /ocpu/library/stats/R/rnorm}                    \\
                 & file    & run script    & control interpreter   & \texttt{POST /ocpu/library/MASS/scripts/ch01.R}              \\ \bottomrule
 \end{tabular}
+\caption{Currently implemented \HTTP methods}
+\label{table:methods}
 \end{table}
 
 \subsubsection{Status codes}
 
-The following are common \HTTP status codes returned by \OpenCPU that the client should be able to interpret. The meaning of these status codes is conform \HTTP standards. These are somewhat specific to the current implementation. 
-
-
+The following are common \HTTP status codes returned by \OpenCPU that the client should be able to interpret. The meaning of these status codes is conform \HTTP standards. 
 
 \begin{table}[h]
 \def\arraystretch{1.5}%
@@ -105,15 +110,21 @@ The following are common \HTTP status codes returned by \OpenCPU that the client
 \texttt{502 Bad Gateway} & Back-end server offline                            & -- (See error logs) \\
 \texttt{503 Bad Request} & Back-end server failure                                & -- (See error logs) \\ \bottomrule                          
 \end{tabularx}
+\caption{Commonly used \HTTP status codes}
+\label{table:statuscodes}
 \end{table}
 
-\subsubsection{Output formats}
+\subsubsection{Object formats}
+
+A client can retrieve objects on the server in various \emph{formats} by postfixing the object \URL with the format identifier in the \GET request. Which formats are supported and how an object is exported into a particular format is at the discretion of the server implementation. Also not every format supports every object type. For example, \texttt{csv} can only be used to retrieve tabular data structures, and \texttt{png} is only appropriate for graphics.
+
+Table \ref{table:formats} lists the formats \OpenCPU supports, the respective \texttt{Content-type}, and the \R function that our implementation uses to convert an object into a particular format. Arguments of the \GET requests are mapped to the respective export function. For example the \texttt{png} format has parameters such as \texttt{width} and \texttt{height}, whereas the \texttt{tab delimited} format has parameters \texttt{sep}, \texttt{eol}, \texttt{dec} which specify the delimiting, end-of-line and decimal character respectively.  
 
 \begin{table}[h]
 \def\arraystretch{1.5}%
 \begin{tabular}{@{}lllll@{}}
 \toprule
- \emph{Format} & \emph{Content-type}             & \emph{Encoding function}      & \emph{Example}    \\ \midrule
+ \emph{Format} & \emph{Content-type}             & \emph{Export function}      & \emph{Example}    \\ \midrule
  \texttt{print}  & \texttt{text/plain}               & \texttt{base::print}    & \texttt{/ocpu/cran/MASS/R/rlm/print}          \\
  \texttt{rda}    & \texttt{application/octet-stream} & \texttt{base::save}     & \texttt{/ocpu/cran/MASS/data/cats/rda}          \\
  \texttt{rds}    & \texttt{application/octet-stream} & \texttt{base::saveRDS}  & \texttt{/ocpu/cran/MASS/data/cats/rds}          \\
@@ -125,5 +136,7 @@ The following are common \HTTP status codes returned by \OpenCPU that the client
  \texttt{pdf}    & \texttt{application/pdf}          & \texttt{grDevices::pdf}      & \texttt{/ocpu/tmp/\{key\}/graphics/1/pdf}     \\
  \texttt{svg}    & \texttt{image/svg+xml}            & \texttt{grDevices::svg}      & \texttt{/ocpu/tmp/\{key\}/graphics/1/svg}     \\ \bottomrule
 \end{tabular}
+\caption{Currently supported object formats and corresponding \texttt{Content-type}}
+\label{table:formats}
 \end{table}
 
