@@ -3,6 +3,8 @@
 
 This section fills in the details of the \OpenCPU system. It is explained how the abstract concepts get shape in the context of \HTTP and how these were implemented using \R. 
 
+This is the core of the system. Might get extended.
+
 
 \subsection{Why HTTP}
 
@@ -71,13 +73,13 @@ The \OpenCPU specification makes reproducibility an integrated part of the \API 
 
 \subsection{Implementation details}
 
-The root of the API is dynamic. It defaults to \texttt{/ocpu/} however system administrators can change this. Clients should make the \OpenCPU server address and root path configurable. In the examples below we assume the default \texttt{/ocpu/}.
+The root of the API is dynamic. It defaults to \texttt{/ocpu/} however system administrators can change this. Clients should make the \OpenCPU server address and root path configurable. In the examples below we assume the default \texttt{/ocpu/} is used.
 
 \subsubsection{Methods}
 
 The current \API uses two methods: \GET and \POST. As per \HTTP standards, \HTTP \GET is a \emph{safe} method which means it is intended only for information retrieval and should not change the state of the server. The \GET method is used to retrieve objects, manuals, graphics or files. The parameters of the request are mapped to the formatting function. A \GET requests targeting a container, namespace or directory is used to list the contents. The \HTTP \POST method on the other is used for \RPC which does change the server state. A \POST request targeting a function results in a remote function call where the \HTTP parameters are mapped to function arguments. A \POST request targeting a script results in an execution of the script where \HTTP parameters are mapped to the script interpreter. 
 
-\begin{table}[h]
+\begin{table}[H]
 \def\arraystretch{1.5}%
 \begin{tabular}{@{}lllll@{}}
 \toprule
@@ -98,9 +100,11 @@ The current \API uses two methods: \GET and \POST. As per \HTTP standards, \HTTP
 
 The following are common \HTTP status codes returned by \OpenCPU that the client should be able to interpret. The meaning of these status codes is conform \HTTP standards. The web server might use additional status codes that are not specific to \OpenCPU.
 
-\begin{table}[h]
+\begin{table}[H]
+\centering
 \def\arraystretch{1.5}%
-\noindent\begin{tabularx}{\columnwidth}{ *{3}{X} }
+%\noindent\begin{tabular}{\columnwidth}{ *{3}{X} }
+\begin{tabular}{@{}lll@{}}
 \toprule
 \emph{Status Code}              & \emph{Happens when}                             & \emph{Content}                     \\ \midrule
 \texttt{200 OK}          & On successful \texttt{GET} request                     & Requested data                    \\
@@ -109,18 +113,36 @@ The following are common \HTTP status codes returned by \OpenCPU that the client
 \texttt{400 Bad Request} & Computational error in \R                                     & Error message in \texttt{text/plain} \\
 \texttt{502 Bad Gateway} & Back-end server offline                            & -- (See error logs) \\
 \texttt{503 Bad Request} & Back-end server failure                                & -- (See error logs) \\ \bottomrule                          
-\end{tabularx}
+\end{tabular}
 \caption{Commonly used \HTTP status codes}
 \label{table:statuscodes}
 \end{table}
 
-\subsubsection{Object formats}
 
-A client can retrieve objects on the server in various \emph{formats} by postfixing the object \URL with the format identifier in the \GET request. Which formats are supported and how an object is exported into a particular format is at the discretion of the server implementation. Also not every format supports every object type. For example, \texttt{csv} can only be used to retrieve tabular data structures, and \texttt{png} is only appropriate for graphics.
+\subsubsection{Argument formats}
 
-Table \ref{table:formats} lists the formats \OpenCPU supports, the respective \texttt{Content-type}, and the \R function that our implementation uses to convert an object into a particular format. Arguments of the \GET requests are mapped to the respective export function. For example the \texttt{png} format has parameters such as \texttt{width} and \texttt{height}, whereas the \texttt{tab delimited} format has parameters \texttt{sep}, \texttt{eol}, \texttt{dec} which specify the delimiting, end-of-line and decimal character respectively.  
+The current implementation supports several \texttt{Content-type} formats for passing arguments to a remote function call within a \POST request. These include \texttt{application/x-www-form-urlencoded}, \texttt{multipart/form-data}, \texttt{application/json} and \texttt{application/x-protobuf}. Each parameter or top level object within a \POST requests contains an argument value. These values can be specified one of several argument formats as listed in table \ref{table:arguments}. Not every \texttt{Content-type} supports each argument format. 
 
-\begin{table}[h]
+
+\begin{table}[H]
+\def\arraystretch{1.5}%
+\begin{tabular}{@{}llllll@{}}
+\toprule
+\texttt{Content-type}                      & Primitives & Data structures  & Raw code & File & Temp Key \\ \midrule
+\texttt{multipart/form-data}               & OK         & OK (inline \texttt{json}) & OK       & OK   & OK            \\
+\texttt{application/x-www-form-urlencoded} & OK         & OK (inline \texttt{json}) & OK       & -    & OK            \\
+\texttt{application/json}                  & OK         & OK               & -        & -    & -             \\
+\texttt{application/x-protobuf}            & OK         & OK               & -        & -    & -             \\ \bottomrule
+\end{tabular}
+\caption{Accepted request \texttt{Content-types} and supported argument formats}
+\label{table:arguments}
+\end{table}
+
+\subsubsection{Output formats}
+
+A client can retrieve objects on the server in various \emph{formats} by postfixing the object \URL with the format identifier in the \GET request. Which formats are supported and how an object is exported into a particular format is at the discretion of the server implementation. Also not every format supports every object type. For example, \texttt{csv} can only be used to retrieve tabular data structures, and \texttt{png} is only appropriate for graphics. Table \ref{table:formats} lists the formats \OpenCPU supports, the respective \texttt{Content-type}, and the \R function that our implementation uses to convert an object into a particular format. Arguments of the \GET requests are mapped to the respective export function. For example the \texttt{png} format has parameters such as \texttt{width} and \texttt{height}, whereas the \texttt{tab delimited} format has parameters \texttt{sep}, \texttt{eol}, \texttt{dec} which specify the delimiting, end-of-line and decimal character respectively.  
+
+\begin{table}[H]
 \def\arraystretch{1.5}%
 \begin{tabular}{@{}lllll@{}}
 \toprule
@@ -136,11 +158,30 @@ Table \ref{table:formats} lists the formats \OpenCPU supports, the respective \t
  \texttt{pdf}    & \texttt{application/pdf}          & \texttt{grDevices::pdf}      & \texttt{/ocpu/tmp/\{key\}/graphics/1/pdf}     \\
  \texttt{svg}    & \texttt{image/svg+xml}            & \texttt{grDevices::svg}      & \texttt{/ocpu/tmp/\{key\}/graphics/1/svg}     \\ \bottomrule
 \end{tabular}
-\caption{Currently supported object formats and corresponding \texttt{Content-type}}
+\caption{Supported object export formats and corresponding \texttt{Content-type}}
 \label{table:formats}
 \end{table}
 
-\subsubsection{Argument formats}
+\subsection{Supported scripts}
+
+A \POST request targeting a file with a recognized file extension results in an execution of the script.  
+
+\begin{table}[H]
+\centering
+\def\arraystretch{1.5}%
+\begin{tabular}{@{}lll@{}}
+\toprule
+\emph{File extension} & \emph{Type}           & \emph{Interpreter}                   \\ \midrule
+\texttt{file.r}         & \R       & \texttt{evaluate::evaluate}            \\
+\texttt{file.tex}       & \Latex          & \texttt{tools::texi2pdf}               \\
+\texttt{file.rnw}       & \texttt{knitr}/\texttt{sweave}   & \texttt{knitr::knit} + \texttt{tools::texi2pdf} \\
+\texttt{file.md}        & \texttt{markdown}       & \texttt{knitr::pandoc}                 \\
+\texttt{file.rmd}       & \texttt{knitr markdown} & \texttt{knitr::knit} + \texttt{knitr::pandoc}   \\
+\texttt{file.brew}      & \texttt{brew}           & \texttt{brew::brew}                    \\ \bottomrule
+\end{tabular}
+\caption{Supported script types and the interpreting fucntion}
+\label{table:scripts}
+\end{table}
 
 \subsubsection{Package \API}
 
