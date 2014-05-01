@@ -1,14 +1,11 @@
 % !TEX root = main.tex
 \section{The OpenCPU system}
 
-This section introduces the \OpenCPU system in more detail. At this point the general logic and concerns discussed earlier become more concrete as we illustrate how the pieces come together in the context of \R and \HTTP. In this paper we mostly focus on the interface of the system and only touch on implementation details to the extend that they are important to appreciate the logic. Besides explaining how clients are supposed to interact with the system, the interface embodies the separation of concerns that is the central to this work. The concepts and operations defined by the \API suggest a minimal structure for embedded scientific computing. 
-
-For the purpose of this paper, just as important as what is included in the \API, is what was left out of the \API. For example the \RPC mechanism implies that concerns of managing processes, hardware and security are at the discretion of the server. Because clients can specify the data interchange format for retrieving an arbitrary resource, the server needs to implement mappings between the various resource types and data interchange formats. 
-
+This section introduces the \OpenCPU system in more detail. At this point the general logic and concerns discussed earlier become more concrete as we illustrate how the pieces come together in the context of \R and \HTTP. In this paper we mostly focus on the interface of the system and only touch on implementation details to the extend that they are relevant to the design of the system. Besides explaining how clients are supposed to interact with the system, the interface embodies the separation of concerns that is the central to this work. Therefore just as relevant as what is included in the \API, is what was left out of the interface. For example the \RPC mechanism implies that concerns of managing processes, hardware and security are at the discretion of the server. Moreover, because clients can specify the data interchange format for retrieving an arbitrary resource, the server needs to implement mappings between the various resource types and data interchange formats. And because computational exceptions are returned using \HTTP status codes, error handling is the responsibility of the client. These are some examples of how the \API implicitly gives rise to the boundaries for separation concerns. Thereby the concepts and operations defined by the \API suggest a minimal structure for embedded scientific computing. 
 
 %implicity by left out.
 
-\subsection{Why HTTP}
+\subsection{On HTTP}
 
 One of the major strengths of \OpenCPU is that it builds on the hypertext transfer protocol. \HTTP is the most used application protocol on the internet, and the foundation of data communication in browsers and the world wide web. The \HTTP specification is very mature, highly optimized and widely implemented. It provides all functionality required to build modern applications and has recently gained popularity for web \API's as well. The benefit of using a standardized application protocol such as \HTTP is that a lot of funtionality gets built-in by design. \HTTP has excellent mechanisms for authentication, encryption, caching, distribution, concurrency, error handling, etc. This allows us to defer most appliation logic of our system to the protocol and limit the \API specification to domain logic of scientific computing. The result is a simple and interoperable interface that is easy to learn and can be implemented with standard \HTTP software libraries. This is an enormous advantage over many other interfaces to \R and critical to make the system scalable and extensible. 
 
@@ -18,7 +15,7 @@ What remains after cutting out implementation and application logic is a simple 
 
 \subsection{Methods}
 
-The current \API uses two methods: \GET and \POST. As per \HTTP standards, \HTTP \GET is a \emph{safe} method which means it is intended only for information retrieval and should not change the state of the server. The \GET method is used to retrieve objects, manuals, graphics or files. The parameters of the request are mapped to the formatting function. A \GET requests targeting a container, namespace or directory is used to list the contents. The \HTTP \POST method on the other is used for \RPC which does change the server state. A \POST request targeting a function results in a remote function call where the \HTTP parameters are mapped to function arguments. A \POST request targeting a script results in an execution of the script where \HTTP parameters are mapped to the script interpreter. 
+The current \API uses two \HTTP methods: \GET and \POST. As per \HTTP standards, \GET is a \emph{safe} method which means it is intended only for information retrieval and should not change the state of the server. The \GET method is used to retrieve objects, manuals, graphics or files. The parameters of the request are mapped to the formatting function. A \GET requests targeting a container, namespace or directory is used to list the contents. The \POST method on the other is used for \RPC which does change the server state. A \POST request targeting a function results in a remote function call where the \HTTP parameters are mapped to function arguments. A \POST request targeting a script results in an execution of the script where \HTTP parameters are mapped to the script interpreter. 
 
 \begin{table}[H]
 \def\arraystretch{1.5}%
@@ -49,7 +46,7 @@ The following are common \HTTP status codes returned by \OpenCPU that the client
 \toprule
 \emph{Status Code}              & \emph{Happens when}                             & \emph{Content}                     \\ \midrule
 \texttt{200 OK}          & On successful \texttt{GET} request                     & Requested data                    \\
-\texttt{201 Created}     & On successful \texttt{POST} request                    & Output location                     \\
+\texttt{201 Created}     & On successful \texttt{POST} request                    & Output key and location                     \\
 \texttt{302 Found}       & Redirect                                               & Redirect location                   \\
 \texttt{400 Bad Request} & Computational error in \R                                     & Error message in \texttt{text/plain} \\
 \texttt{502 Bad Gateway} & Back-end server offline                            & -- (See error logs) \\
@@ -61,6 +58,8 @@ The following are common \HTTP status codes returned by \OpenCPU that the client
 
 
 %This section introduces the principal entities and operations defined by the \API. As was described before, individual requests within the \OpenCPU \API are stateless and there is no notion of a \emph{process}. State of the system changes through creation and manipulation of resources such as objects, graphics and files. 
+
+\subsection{Headers}
 
 \subsection{Objects}
 
@@ -125,7 +124,7 @@ The root of the API is dynamic. It defaults to \texttt{/ocpu/} however system ad
 \def\arraystretch{1.5}%
 \begin{tabular}{@{}lll@{}}
 \toprule
-Path & Desription                      & Examples                \\ \midrule
+\emph{Path} & \emph{Desription}                      & \emph{Examples}                \\ \midrule
 \texttt{.}    & Package information                      & \texttt{/ocpu/cran/MASS/}               \\
 \texttt{./R}    & Exported namespace objects             & \texttt{/ocpu/cran/MASS/R/}             \\
      &                                                   & \texttt{/ocpu/cran/MASS/R/rlm/print}    \\
@@ -145,7 +144,7 @@ Path & Desription                      & Examples                \\ \midrule
 \def\arraystretch{1.5}%
 \begin{tabular}{@{}lll@{}}
 \toprule
-Path          & Desription                      & Examples                \\ 
+\emph{Path}          & \emph{Desription}                      & \emph{Examples}                \\ 
 \midrule
 \texttt{.}          & Session content list                                       & \texttt{/ocpu/tmp/\{key\}/}               \\
 \texttt{./R}        & Objects created by the \RPC request                        & \texttt{/ocpu/tmp/\{key\}/R/}             \\
@@ -201,7 +200,7 @@ Arguments to a remote function call can be posted using one of several methods. 
 \def\arraystretch{1.5}%
 \begin{tabular}{@{}llllll@{}}
 \toprule
-\texttt{Content-type}                      & Primitives & Data structures  & Raw code & File & Temp Key \\ \midrule
+\emph{Content-type}                      & \emph{Primitives} & \emph{Data structures}  &  \emph{Raw code} & \emph{File} & \emph{Temp key} \\ \midrule
 \texttt{multipart/form-data}               & OK         & OK (inline \texttt{json}) & OK       & OK   & OK            \\
 \texttt{application/x-www-form-urlencoded} & OK         & OK (inline \texttt{json}) & OK       & -    & OK            \\
 \texttt{application/json}                  & OK         & OK               & -        & -    & -             \\
