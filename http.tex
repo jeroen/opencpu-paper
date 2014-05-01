@@ -118,6 +118,58 @@ The following are common \HTTP status codes returned by \OpenCPU that the client
 \label{table:statuscodes}
 \end{table}
 
+\subsubsection{Containers}
+
+Package container
+
+\begin{table}[H]
+\centering
+\def\arraystretch{1.5}%
+\begin{tabular}{@{}lll@{}}
+\toprule
+Path & Desription                      & Examples                \\ \midrule
+\texttt{.}    & Package information                      & \texttt{/ocpu/cran/MASS/}               \\
+\texttt{./R}    & Exported namespace objects             & \texttt{/ocpu/cran/MASS/R/}             \\
+     &                                                   & \texttt{/ocpu/cran/MASS/R/rlm/print}    \\
+\texttt{./data} & Data objects in the package (\HTTP \GET only)         & \texttt{/ocpu/cran/MASS/data/}          \\
+     &                                                   & \texttt{/ocpu/cran/MASS/data/cats/json} \\
+\texttt{./man}  & Manual pages in the package (\HTTP \GET only)         & \texttt{/ocpu/cran/MASS/man/}           \\
+     &                                                   & \texttt{/ocpu/cran/MASS/man/rlm/html}   \\
+\texttt{./*}    & Files in installation directory of the package      & \texttt{/ocpu/cran/MASS/NEWS}    \\
+     &                                                   & \texttt{/ocpu/cran/MASS/scripts/}       \\ \bottomrule
+\end{tabular}
+\caption{The package container includes objects, data, manual pages and files.}
+\label{table:packageapi}
+\end{table}
+
+Session container
+
+\begin{table}[H]
+\centering
+\def\arraystretch{1.5}%
+\begin{tabular}{@{}lll@{}}
+\toprule
+Path          & Desription                      & Examples                \\ 
+\midrule
+\texttt{.}          & Session content list                                       & \texttt{/ocpu/tmp/\{key\}/}               \\
+\texttt{./R}        & Objects created by the \RPC request                        & \texttt{/ocpu/tmp/\{key\}/R/}             \\
+                    &                                                            & \texttt{/ocpu/tmp/\{key\}/R/mydata/json}  \\
+\texttt{./graphics} & Graphics created by the \RPC request                       & \texttt{/ocpu/tmp/\{key\}/graphics/}      \\
+                    &                                                            & \texttt{/ocpu/tmp/\{key\}/graphics/1/png} \\
+\texttt{./source}   & Source code of \RPC request                                & \texttt{/ocpu/tmp/\{key\}/source/}       \\
+\texttt{./stdout}   & \texttt{STDOUT} from by the \RPC request                   & \texttt{/ocpu/tmp/\{key\}/stdout/}       \\
+\texttt{./console}  & Mixed source and \texttt{STDOUT} emulating console output  & \texttt{/ocpu/tmp/\{key\}/console/}     \\
+\texttt{./files/*}  & Files saved to working dir by the \RPC request             & \texttt{/ocpu/tmp/\{key\}/files/myfile.xyz}       \\
+
+                                                
+\bottomrule
+\end{tabular}
+\caption{The session container includes objects, graphics, source, stdout and files.}
+\label{table:sessionapi}
+\end{table}
+
+
+
 
 \subsubsection{Argument formats}
 
@@ -162,7 +214,7 @@ A client can retrieve objects on the server in various \emph{formats} by postfix
 \label{table:formats}
 \end{table}
 
-\subsection{Supported scripts}
+\subsubsection{Supported scripts}
 
 A \POST request targeting a file with a recognized file extension results in an execution of the script.  
 
@@ -183,10 +235,3 @@ A \POST request targeting a file with a recognized file extension results in an 
 \label{table:scripts}
 \end{table}
 
-\subsubsection{Package \API}
-
-\subsubsection{Session \API}
-
-
-
-\subsubsection{Object formats}
