@@ -82,7 +82,7 @@ Clients can retrieve objects on the server in various \emph{formats} by postfixi
 
 \subsection{URLs}
 
-The root of the API is dynamic. It defaults to \texttt{/ocpu/} however system administrators can change this. Clients should make the \OpenCPU server address and root path configurable. In the examples we assume the default \texttt{/ocpu/} is used. As discussed before, \OpenCPU currently implements two container types to hold resources. Table \ref{table:packageapi} lists the \texttt{URL}s of the  \emph{package} is a container type, which includes objects, data, manual pages and files.
+The root of the API is dynamic. It defaults to \texttt{/ocpu/} however system administrators can change this. Clients should make the \OpenCPU server address and root path configurable. In the examples we assume the default \texttt{/ocpu/} is used. As discussed before, \OpenCPU currently implements two container types to hold resources. Table \ref{table:packageapi} lists the \texttt{URL}s of the \emph{package} container type, which includes objects, data, manual pages and files.
 
 \begin{table}[H]
 \centering
@@ -104,6 +104,7 @@ The root of the API is dynamic. It defaults to \texttt{/ocpu/} however system ad
 \label{table:packageapi}
 \end{table}
 
+Similarly table \ref{table:sessionapi} lists \texttt{URL}s of the \emph{session} container type. This container holds outputs generated from a \RPC request and includes objects, graphics, source code, stdout and files. Note that the distinction between packages and sessions is considered an implementation detail. The \API does not differentiate between objects and files that appear in packages or in sessions.
 
 
 \begin{table}[H]
@@ -131,14 +132,9 @@ The root of the API is dynamic. It defaults to \texttt{/ocpu/} however system ad
 \end{table}
 
 
+\subsection{RPC requests}
 
-
-
-
-
-\subsection{RPC}
-
-A \POST request in \OpenCPU invokes a remote procedure call (\RPC). Requests targeting a \emph{function} object result in a function call where the \HTTP parameters from the post body are mapped to function \emph{arguments}. Similarly, a \texttt{POST} targeting a \emph{script} results in execution of the script where \HTTP parameters are passed to the script interpreter. The current \OpenCPU implementation recognizes scripts by their file extension, and supports \R, \texttt{latex}, \texttt{markdown}, \texttt{Sweave} and \texttt{knitr} scripts. We use the term \RPC to refer to both remote function calls and remote script executions. One conceptual difference with a terminal interface is that in the \OpenCPU \API, the server determines the name and namespace that output of a function call is assigned to. The server includes a temporary \emph{key} in the \RPC response that serves the same role as a variable name and is used to reference the newly created resources in future requests. This key is private and the client should treat it confidentially.
+A \POST request in \OpenCPU always invokes a remote procedure call (\RPC). Requests targeting a \emph{function} object result in a function call where the \HTTP parameters from the post body are mapped to function \emph{arguments}. Similarly, a \texttt{POST} targeting a \emph{script} results in execution of the script where \HTTP parameters are passed to the script interpreter. We use the term \RPC to refer to both remote function calls and remote script executions. The current \OpenCPU implementation recognizes scripts by their file extension, and supports \R, \texttt{latex}, \texttt{markdown}, \texttt{Sweave} and \texttt{knitr} scripts. Table \ref{table:scripts} lists each script type with the respective file extension.
 
 \begin{table}[H]
 \centering
@@ -153,13 +149,13 @@ A \POST request in \OpenCPU invokes a remote procedure call (\RPC). Requests tar
 \texttt{file.rmd}       & \texttt{knitr markdown} & \texttt{knitr::knit} + \texttt{knitr::pandoc}   \\
 \texttt{file.brew}      & \texttt{brew}           & \texttt{brew::brew}                    \\ \bottomrule
 \end{tabular}
-\caption{A \POST request targeting a file with a recognized file extension results in an execution of the script}
+\caption{Files recognzied as scripts and their characterizing file extension}
 \label{table:scripts}
 \end{table}
 
-Besides the return value, the server stores graphics, files, warnings, messages and \texttt{stdout} that were created during the function call. These contents can be listed and retrieved using the same key as for the object. In \R, the function call itself is also an object which is added to the collection for reproducibility purposes. Objects on the system are non mutable and therefore the client can not change or overwrite existing keys or objects. For function calls that modify the state of an object, the server creates a copy of the modified object under a new name and leaves the original unaffected.
+One conceptual difference with a terminal interface is that in the \OpenCPU \API, the server determines the namespace that output of a function call is assigned to. The server includes a temporary \emph{key} in the \RPC response that serves the same role as a variable name and is used to reference the newly created resources in future requests. This key is private and the client should treat it confidentially. Besides the return value, the server stores graphics, files, warnings, messages and \texttt{stdout} that were created during the function call. These contents can be listed and retrieved using the same key as for the object. In \R, the function call itself is also an object which is added to the collection for reproducibility purposes. Objects on the system are non mutable and therefore the client can not change or overwrite existing keys or objects. For function calls that modify the state of an object, the server creates a copy of the modified object under a new name and leaves the original unaffected.
 
-\subsubsection{RPC Arguments}
+\subsection{Arguments}
 
 Arguments to a remote function call can be posted using one of several methods. A data interchange format such as \JSON or \texttt{Protocol Buffers} can be used to directly post data structures such as lists, vectors, matrices or data frames. Alternatively the client can reference an existing object on the server using a key or name. The server automatically resolves keys and converts data structures into native objects which are used as arguments in the function call. Hence the function that is called is not restricted to a particular data interchange format. Files can also be used as arguments within remote function calls. Any files contained in a \texttt{multipart/form-data}  post request will be copied to the working directory before the function call is executed. The server then sets the argument in the function call to the \texttt{filename}. Thereby we can remotely call functions with a file argument using standard \HTML form submission.
 
@@ -178,9 +174,4 @@ Arguments to a remote function call can be posted using one of several methods. 
 \label{table:arguments}
 \end{table}
 
-The current implementation supports several \texttt{Content-type} formats for passing arguments to a remote function call within a \POST request. These include \texttt{application/x-www-form-urlencoded}, \texttt{multipart/form-data}, \texttt{application/json} and \texttt{application/x-protobuf}. Each parameter or top level object within a \POST requests contains an argument value. These values can be specified one of several argument formats as listed in table \ref{table:arguments}. Not every \texttt{Content-type} supports each argument format. 
-
-\subsubsection{Reproducibility}
-
-The \OpenCPU specification makes reproducibility an integrated part of the \API interaction. For each \RPC request the server needs to store the call, script, arguments or input files, in addition to results. The same key that is used to retrieve output resources such as objects or graphics, can be used to retrieve the input resources or automatically replicate the entire computation. Hence for each output resource on the system, clients can lookup the code, data, warnings and packages that were involved in the creation of an object. Thereby results can easily and automatically be recalculated, which forms a powerful foundation for reproducible practices. However this system can also be used for other purposes. For example, if a procedure fetches dynamic data from an external resource to generate a model or plot, we can use reproduction to \emph{update} the model or plot with the latest data.
-
+The current implementation supports several \texttt{Content-type} formats for passing arguments to a remote function call within a \POST request. These include \texttt{application/x-www-form-urlencoded}, \texttt{multipart/form-data}, \texttt{application/json} and \texttt{application/x-protobuf}. Each parameter or top level object within a \POST requests contains an argument value. These values can be specified one of several argument formats as listed in table \ref{table:arguments}. Not every \texttt{Content-type} supports each argument format. Table \ref{table:arguments} shows a matrix of which \texttt{Content-types} support which argument formats.
