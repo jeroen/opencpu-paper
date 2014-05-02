@@ -1,0 +1,41 @@
+% !TEX root = main.tex
+\section{Resource types}
+
+As was described earlier, individual requests within the \OpenCPU \API are stateless and there is no notion of a \emph{process}. State of the system changes through creation and manipulation of resources. We start by describing the various resource types which are the conceptual building blocks of the \API. Each resource type has unique properties and supports different operations.
+
+\subsection{Objects}
+
+Objects are the main entities of the system and carry the same meaning as within a functional language. They include data structures, functions, or other types supported by the back-end language, in our case \R. Each object has an individual endpoint within the \API and unique name or key within its namespace. The client needs no knowledge of the implementation of these objects. Analogous to a \UI, the primary purpose of the \API is managing objects (creating, retrieving, publishing) and performing procedure calls. Existing objects may also be used as arguments in a remote function call. Objects created from executing a script or returned by a function call are automatically stored and gain the same status as other existing objects. The \API does not distinguish between static objects that appear in e.g. packages, or dynamic objects created by users, nor does it distinguish between objects in memory or on disk. The \API merely provides a system for referencing objects in a way that allows clients to control and reuse them. The implementation of persistence, caching and expiration of objects is at the discretion of the server. 
+
+\subsection{Namespaces}
+
+A namespace is a collection of uniquely named objects with a given path in the \API. In \R, static namespaces are implemented using \emph{packages} and dynamic namespaces exist in \emph{environments} such as the user workspace. However \OpenCPU abstracts the concept of a namespace as a set of uniquely named objects and does not distinguish between static or dynamic, persistent or temporary namespaces. Clients can request a list of the contents of any namespace, however the server might refuse such a request for private namespaces or hidden objects. 
+
+\subsection{Formats}
+
+\OpenCPU explicitly differentiates a resource from a \emph{representation} of that resource in a particular \emph{format}. The \API lets the client rather than the server decide on the format used to serve content. This is a difference with common scientific practices of exchanging data, documents and figures in fixed format files. Resources in \OpenCPU can be retrieved using various output formats and formatting parameters. For example a basic dataset can be retrieved in \texttt{csv}, \texttt{json}, \texttt{Protocol Buffers} or \texttt{tab delimited} format. Similarly, a graphic can be retrieved in \texttt{svg}, \texttt{png} or \texttt{pdf} and manual pages can be retrieved in \texttt{text}, \texttt{html} or \texttt{pdf} format. In addition to the format, the client can specify formatting parameters in the request. The system supports many additional formats, but not every format is appropriate for every resource type. When a client requests a resource in a format using an invalid format, the server responds with an error.   
+
+
+\subsection{Data}
+
+The \API defines a seperate entity for \emph{data} objects. Even though data can technically be treated as general objects, in practice they often serve a different purpose. For example data are usually not language specific and can not be called or executed. Therefore it is often suitable to conceptually distinguish this subset of objects. For example \R uses lazy loading of data objects to save memory when for packages containing large datasets.
+
+\subsection{Graphics}
+
+Any function call can produce zero or more graphics. After completing a remote function call, the server reports how many graphics were created and provides the key for referencing these graphics. Clients can retrieve each individual graphic in subsequent requests using one of various output formats such as \texttt{png}, \texttt{pdf}, and \texttt{svg}. Where appropriate the client can specify additional formatting paramters during the retrieval of the graphic such as width, height or font size.
+
+\subsection{Files}
+
+Files can be uploaded and downloaded using standard \HTTP mechanics. The client can post a file as an argument in a remote function call, or download files that were saved to the working directory by the function call. Support for files also allows for hosting web pages (e.g. \texttt{html}, \texttt{css}, \texttt{js}) that interact with local \API endpoints to serve a web application. Furthermore files can be used as arguments to remote function calls, and files that are recognized as \emph{scripts} can be executed using \RPC.
+
+\subsection{Manuals}
+
+In most scientific computing languages, each function or dataset that is available to the user is accompanied by an identically named manual page. This manual page includes information such as description and usage of functions and their arguments, or explanation and comments about the columns of a particular dataset. Manual pages can be retrieved in various formats including plain text, \texttt{html} and \texttt{pdf}.
+
+\subsection{Containers}
+
+We refer to a path on the server containing one or more collections of resources as a \emph{container}. The current implementation suptports two types of containers. A \emph{package} is a static container which may include a namespace with \R objects, manual pages, data and files.  A \emph{session} is another type of container that holds outputs created from executing a script or function call, including a namespace with \R objects, graphics and files. However the distinction between packages and sessions is actually an implementation detail. The \API does not differentiate between the various container types: interacting with an object or file works the same, regardless of whether it is part of a package or session. Future implementations or other servers might use other container types for grouping a collection of resources.
+
+\subsection{Libraries}
+
+We will refer to a collection of containers as a \emph{library}. In \R terminology a library is a directory on disk with installed packages. However within the context of the \API, the concept is not limited to packages but refers more generally to any set of containers. For example the \texttt{/ocpu/tmp/} library is the collection of temporary sessions. Also the \API notion of a library does not require containers to be preinstalled. For example, a remote collection of packages, which in \R terminology is called a \emph{respository}, can also be implemented as a library. The current implementation of \OpenCPU exposes the \texttt{/ocpu/cran/} library which refers to the current packages on the \texttt{CRAN} repository. The \API does not differentiate between a library of sessions, local packages or remote packages. Interacting with an object from a \texttt{CRAN} package works the same as interacting with an object from a local package or temporary session. The \API leaves it up to the server which types of libraries it wishes to expose and how to implement this. The current version of \OpenCPU uses a combination of cronjobs and on-the-fly package installations to synchronize packages on the server with the \texttt{CRAN} repositories.
