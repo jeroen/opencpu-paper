@@ -45,7 +45,7 @@ Each \HTTP response includes a status code. Table \ref{table:statuscodes} lists 
 \texttt{200 OK}          & On successful \texttt{GET} request                     & Requested data                    \\
 \texttt{201 Created}     & On successful \texttt{POST} request                    & Output key and location                     \\
 \texttt{302 Found}       & Redirect                                               & Redirect location                   \\
-\texttt{400 Bad Request} & On computational error in \R                                     & Error message in \texttt{text/plain} \\
+\texttt{400 Bad Request} & On computational error in \R                                     & Error message from \R in \texttt{text/plain} \\
 \texttt{502 Bad Gateway} & Back-end server offline                            & -- (See error logs) \\
 \texttt{503 Bad Request} & Back-end server failure                                & -- (See error logs) \\ \bottomrule                          
 \end{tabular}
@@ -55,7 +55,7 @@ Each \HTTP response includes a status code. Table \ref{table:statuscodes} lists 
 
 \subsection{Content-types}
 
-Clients can retrieve objects on the server in various \emph{formats} by postfixing the object \URL with the format identifier in the \GET request. Which formats are supported and how object types are mapped to a particular format is at the discretion of the server implementation. Not every format can support any object type. For example, \texttt{csv} can only be used to retrieve tabular data structures, and \texttt{png} is only appropriate for graphics. Table \ref{table:formats} lists the formats \OpenCPU supports, the respective internet media type, and the \R function that \OpenCPU uses to export an object into a particular format. Arguments of the \GET requests are mapped to the export function. For example the \texttt{png} format has parameters such as \texttt{width} and \texttt{height} as documented in \texttt{?png}, whereas the \texttt{tab delimited} format has parameters \texttt{sep}, \texttt{eol}, \texttt{dec} which specify the delimiting, end-of-line and decimal character respectively as documented in \texttt{?write.table}.
+Clients can retrieve objects on the server in various \emph{formats} by postfixing the object \URL with the format identifier in the \GET request. Which formats are supported and how object types are mapped to a particular format is at the discretion of the server implementation. Not every format can support any object type. For example, \texttt{csv} can only be used to retrieve tabular data structures, and \texttt{png} is only appropriate for graphics. Table \ref{table:formats} lists the formats \OpenCPU supports, the respective internet media type, and the \R function that \OpenCPU uses to export an object into a particular format. Arguments of the \GET requests are mapped to this export function. For example the \texttt{png} format has parameters such as \texttt{width} and \texttt{height} as documented in \texttt{?png}, whereas the \texttt{tab} format has parameters \texttt{sep}, \texttt{eol}, \texttt{dec} which specify the delimiting, end-of-line and decimal character respectively as documented in \texttt{?write.table}.
 
 \begin{table}[H]
 \centering
@@ -151,11 +151,13 @@ A \POST request in \OpenCPU always invokes a remote procedure call (\RPC). Reque
 \label{table:scripts}
 \end{table}
 
-An important conceptual difference with a terminal interface is that in the \OpenCPU \API, the server determines the namespace that output of a function call is assigned to. The server includes a \emph{temporary key} in the \RPC response that serves the same role as a variable name. The key and is used to reference the newly created resources in future requests. Besides the return value, the server also stores graphics, files, warnings, messages and \texttt{stdout} that were created by the \RPC, and which can be listed and retrieved using the same key. In \R, the function call itself is also an object which is added to the collection for reproducibility purposes. Objects on the system are non mutable and therefore the client can not change or overwrite existing keys or objects. For function calls that modify the state of an object, the server creates a copy of the modified object with a new key and leaves the original unaffected.
+An important conceptual difference with a terminal interface is that in the \OpenCPU \API, the server determines the namespace that output of a function call is assigned to. The server includes a \emph{temporary key} in the \RPC response that serves the same role as a variable name. The key and is used to reference the newly created resources in future requests. Besides the return value, the server also stores graphics, files, warnings, messages and \texttt{stdout} that were created by the \RPC. These can be listed and retrieved using the same key. In \R, the function call itself is also an object which is added to the collection for reproducibility purposes. 
+
+Objects on the system are non mutable and therefore the client can not change or overwrite existing keys or objects. For function calls that modify the state of an object, the server creates a copy of the modified object with a new key and leaves the original unaffected.
 
 \subsection{Arguments}
 
-Arguments to a remote function call can be posted using one of several methods. A data interchange format such as \JSON or \texttt{Protocol Buffers} can be used to directly post data structures such as lists, vectors, matrices or data frames. Alternatively the client can reference an existing object on the server by it's key or name. The server automatically resolves keys and converts data structures into native objects which are used as arguments in the function call. Hence the function is not restricted to a particular data interchange format. Files can also be used as arguments within remote function calls. Files contained in a \texttt{multipart/form-data} request are copied to the working directory and the argument of the function call is set to the \texttt{filename}. Thereby remote function calls with a file arguments can be performed using standard \HTML form submission methods.
+Arguments to a remote function call can be posted using one of several methods. A data interchange format such as \JSON or \texttt{Protocol Buffers} can be used to directly post data structures such as lists, vectors, matrices or data frames. Alternatively the client can reference the name or key of an existing object. The server automatically resolves keys and converts data structures into native objects to be used as arguments in the function call. Files can also be used as arguments within remote function calls. Files contained in a \texttt{multipart/form-data} request are copied to the working directory and the argument of the function call is set to the \texttt{filename}. Thereby remote function calls with a file arguments can be performed using standard \HTML form submission.
 
 \begin{table}[H]
 \centering
@@ -172,7 +174,7 @@ Arguments to a remote function call can be posted using one of several methods. 
 \label{table:arguments}
 \end{table}
 
-The current implementation supports several \texttt{Content-type} formats for passing arguments to a remote function call within a \POST request. These include \texttt{application/x-www-form-urlencoded}, \texttt{multipart/form-data}, \texttt{application/json} and \texttt{application/x-protobuf}. Each parameter or top level object within a \POST requests contains an argument value. These values can be specified one of several argument formats as listed in table \ref{table:arguments}. Not every \texttt{Content-type} supports each argument format. Table \ref{table:arguments} shows a matrix of which \texttt{Content-types} support which argument formats.
+The current implementation supports several standard \texttt{Content-type} formats for passing arguments to a remote function call within a \POST request. These include \texttt{application/x-www-form-urlencoded}, \texttt{multipart/form-data}, \texttt{application/json} and \texttt{application/x-protobuf}. Each parameter or top level field within a \POST payload contains an argument value. Table \ref{table:arguments} shows a matrix of which \texttt{Content-types} support which argument formats.
 
 
 
