@@ -1,8 +1,40 @@
 % !TEX root = template.tex
 
-\title{The OpenCPU System: Towards a Universal Interface for Scientific Computing through Separation of Concerns}
+%custom commands
+\newcommand{\CPU}{\texttt{CPU}\xspace}
+\newcommand{\MCMC}{\texttt{MCMC}\xspace}
+\newcommand{\URL}{\texttt{URL}\xspace}
+\newcommand{\DSL}{\texttt{DSL}\xspace}
+\newcommand{\REST}{\texttt{REST}\xspace}
+\newcommand{\HTML}{\texttt{HTML}\xspace}
+\newcommand{\Linux}{\texttt{Linux}\xspace}
+\newcommand{\GET}{\texttt{GET}\xspace}
+\newcommand{\POST}{\texttt{POST}\xspace}
+\newcommand{\JSON}{\texttt{JSON}\xspace}
+\newcommand{\SQL}{\texttt{SQL}\xspace}
+\newcommand{\CGI}{\texttt{CGI}\xspace}
+\newcommand{\R}{\texttt{R}\xspace}
+\newcommand{\Julia}{\texttt{Julia}\xspace}
+\newcommand{\SPSS}{\texttt{SPSS}\xspace}
+\newcommand{\JavaScript}{\texttt{JavaScript}\xspace}
+\newcommand{\CSS}{\texttt{CSS}\xspace}
+\newcommand{\HTTP}{\texttt{HTTP}\xspace}
+\newcommand{\TCP}{\texttt{TCP}\xspace}
+\newcommand{\IP}{\texttt{IP}\xspace}
+\newcommand{\GUI}{\texttt{GUI}\xspace}
+\newcommand{\CLI}{\texttt{CLI}\xspace}
+\newcommand{\UI}{\texttt{UI}\xspace}
+\newcommand{\API}{\texttt{API}\xspace}
+\newcommand{\RPC}{\texttt{RPC}\xspace}
+\newcommand{\ID}{\texttt{ID}\xspace}
+\newcommand{\OpenCPU}{\texttt{OpenCPU}\xspace}
+\newcommand{\Latex}{\LaTeX \xspace}
+\newcommand{\toJSON}{\texttt{toJSON}\xspace}
+\newcommand{\fromJSON}{\texttt{fromJSON}\xspace}
+\newcommand{\XML}{\texttt{XML}\xspace}
+\newcommand{\jsonlite}{\texttt{jsonlite}\xspace}
 
-\maketitle
+\maintitle{The OpenCPU System: Towards a Universal Interface for Scientific Computing through Separation of Concerns}
 
 \begin{abstract}
 Applications integrating analysis components require a programmable interface which defines statistical operations independently of any programming language. By separating concerns of scientific computing from application and implementation details we can derive an interoperable \API for data analysis. But what exactly are the concerns of scientific computing? To answer this question, the paper starts with an exploration of the purpose, problems, characteristics, struggles, culture, and community of this unique branch of computing. By mapping out the domain logic, we try to determine the fundamental principles and concepts behind statistical software. Along the way we highlight important problems and bottlenecks that need to be addressed by the system in order to facilitate reliable and scalable analysis units. Finally, the \OpenCPU software is introduced as an example implementation that builds on \HTTP and \R to expose a simple, abstracted interface for scientific computing.
