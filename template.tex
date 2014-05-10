@@ -1,9 +1,9 @@
-%meta
+%This is a template. 
+%Actual text goes in content.tex
 \documentclass{article}
 \author{Jeroen Ooms}
-\date{}
 
-%some packages
+%useful packages
 \usepackage{url}
 \usepackage{fullpage}
 \usepackage{xspace}
@@ -22,15 +22,34 @@
 %support for accents
 \usepackage[utf8]{inputenc}
 
+%support for ascii art 
+\usepackage{pmboxdraw}
+
 %use vspace instead of indentation for paragraphs
 \usepackage{parskip}
-
-%don't number subsubsection
-%\setcounter{secnumdepth}{2}
 
 %extra line spacing
 \usepackage{setspace}
 \setstretch{1.5}
+
+%knitr style verbatim blocks
+\newenvironment{codeblock}{
+  \VerbatimEnvironment
+  \definecolor{shadecolor}{rgb}{0.95, 0.95, 0.95}\color{fgcolor}
+  \color{black}
+  \begin{kframe}
+  \begin{BVerbatim}
+}{
+  \end{BVerbatim}
+  \end{kframe}
+}
+
+%placeholders for JSS
+\newcommand{\pkg}[1]{\texttt{#1}}
+\newcommand{\CRANpkg}[1]{\texttt{#1}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\file}[1]{\texttt{#1}}
+\newcommand{\dfn}[1]{\emph{#1}}
 
 %custom commands
 \newcommand{\CPU}{\texttt{CPU}\xspace}
@@ -61,11 +80,18 @@
 \newcommand{\ID}{\texttt{ID}\xspace}
 \newcommand{\OpenCPU}{\texttt{OpenCPU}\xspace}
 \newcommand{\Latex}{\LaTeX \xspace}
-%actual doc
-\begin{document}
+\newcommand{\toJSON}{\texttt{toJSON}\xspace}
+\newcommand{\fromJSON}{\texttt{fromJSON}\xspace}
+\newcommand{\XML}{\texttt{XML}\xspace}
+\newcommand{\jsonlite}{\texttt{jsonlite}\xspace}
 
+%actual document
+\begin{document}
 \input{content}
 
+%references
 \bibliographystyle{plainnat}
 \bibliography{thesis}
+
+%end
 \end{document}
